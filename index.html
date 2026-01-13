@@ -1098,17 +1098,20 @@
             </div>
         </div>
         <div class="filter-section">
-            <h4>PRESETS</h4>
+            <h4>STYLE PRESETS</h4>
             <div class="filter-tags">
-                <button class="preset-btn" style="background:#ff006e;" onclick="applyGlitchOnly()">GLITCH ONLY</button>
-                <button class="preset-btn" onclick="applyPreset('glitch')">Glitch Core</button>
+                <button class="preset-btn" style="background:#8338ec;" onclick="clearAllFilters()">ALL ART (Random)</button>
+                <button class="preset-btn" style="background:#ff006e;" onclick="applyPreset('glitch')">Glitch</button>
+                <button class="preset-btn" onclick="applyPreset('pixel')">Pixel Art</button>
+                <button class="preset-btn" onclick="applyPreset('painting')">Painting</button>
+                <button class="preset-btn" onclick="applyPreset('animation')">Animation</button>
+                <button class="preset-btn" onclick="applyPreset('3d')">3D Art</button>
+                <button class="preset-btn" onclick="applyPreset('abstract')">Abstract</button>
+                <button class="preset-btn" onclick="applyPreset('dark')">Dark Art</button>
                 <button class="preset-btn" onclick="applyPreset('vhs')">VHS / Retro</button>
                 <button class="preset-btn" onclick="applyPreset('cyber')">Cyberpunk</button>
-                <button class="preset-btn" onclick="applyPreset('trippy')">Trippy / Psychedelic</button>
-                <button class="preset-btn" onclick="applyPreset('minimal')">Minimal</button>
-                <button class="preset-btn" onclick="applyPreset('all')">All Filters</button>
+                <button class="preset-btn" onclick="applyPreset('trippy')">Trippy</button>
                 <button class="preset-btn" style="background:#333;" onclick="applyPublicDomain()">Public Domain</button>
-                <button class="preset-btn" style="background:#444;" onclick="clearAllFilters()">Clear All</button>
             </div>
         </div>
         <div class="filter-section">
@@ -1302,8 +1305,25 @@
         ];
         let redditSubs = [...allRedditSubs];
 
-        // All available search terms
+        // All available search terms (broad art styles)
         const allSearchTerms = [
+            // Digital & Modern
+            'digital art', 'pixel art', '3d art', 'animation', 'motion graphics',
+            'generative art', 'ai art', 'nft art', 'concept art', 'fantasy art',
+            // Traditional styles
+            'watercolor', 'oil painting', 'illustration', 'sketch', 'portrait',
+            'landscape', 'abstract art', 'surrealism', 'impressionism', 'pop art',
+            // Aesthetic styles
+            'minimalist', 'aesthetic', 'vintage', 'retro', 'neon',
+            'cyberpunk', 'synthwave', 'vaporwave', 'dark art', 'colorful',
+            // Glitch & experimental
+            'glitch art', 'datamosh', 'vhs aesthetic', 'distortion',
+            // Photography styles
+            'long exposure', 'macro', 'cinematic', 'moody'
+        ];
+
+        // Glitch-specific terms (original default)
+        const glitchTerms = [
             'glitch art', 'datamosh', 'vhs glitch', 'digital glitch',
             'pixel glitch', 'video glitch', 'glitch aesthetic', 'corrupted',
             'distortion art', 'cyberpunk glitch', 'retro glitch', 'static noise',
@@ -1315,21 +1335,21 @@
 
         // Presets
         const presets = {
-            claude: ['glitch art', 'datamosh', 'vhs glitch', 'digital glitch', 'pixel glitch', 'video glitch',
-                     'glitch aesthetic', 'corrupted', 'distortion art', 'cyberpunk glitch', 'retro glitch',
-                     'static noise', 'analog glitch', 'trippy visuals', 'psychedelic loop', 'neon glitch',
-                     'rgb split', 'scan lines', 'broken tv', 'signal noise', 'synthwave', 'vaporwave',
-                     'holographic', 'lcd glitch', 'pixel sort', 'data corruption', 'abstract loop', 'hypnotic animation'],
-            glitch: ['glitch art', 'datamosh', 'digital glitch', 'pixel glitch', 'corrupted', 'data corruption', 'pixel sort'],
+            glitch: glitchTerms,
+            pixel: ['pixel art', '8bit', '16bit', 'retro gaming', 'sprite art', 'pixel animation'],
+            painting: ['watercolor', 'oil painting', 'acrylic', 'impressionism', 'portrait', 'landscape'],
+            animation: ['animation', 'motion graphics', 'loop', 'animated', '2d animation', '3d animation'],
+            '3d': ['3d art', '3d render', 'cgi', 'blender', 'octane', 'cinema4d'],
+            abstract: ['abstract art', 'generative art', 'geometric', 'minimalist', 'pattern'],
+            dark: ['dark art', 'gothic', 'horror art', 'macabre', 'surreal dark'],
             vhs: ['vhs glitch', 'retro glitch', 'analog glitch', 'scan lines', 'broken tv', 'signal noise', 'static noise'],
-            cyber: ['cyberpunk glitch', 'neon glitch', 'synthwave', 'vaporwave', 'holographic', 'rgb split'],
-            trippy: ['trippy visuals', 'psychedelic loop', 'hypnotic animation', 'abstract loop', 'distortion art'],
-            minimal: ['glitch art', 'pixel glitch', 'static noise'],
+            cyber: ['cyberpunk', 'neon', 'synthwave', 'vaporwave', 'holographic', 'futuristic'],
+            trippy: ['trippy visuals', 'psychedelic', 'hypnotic', 'optical illusion', 'kaleidoscope'],
             all: [...allSearchTerms]
         };
 
-        // Active search terms (start with all)
-        let searchTerms = [...allSearchTerms];
+        // Active search terms (start empty for ALL art - uses wildcard search)
+        let searchTerms = [];
 
         function showLoading(show = true, status = 'INITIALIZING FEEDS...') {
             const screen = document.getElementById('loadingScreen');
