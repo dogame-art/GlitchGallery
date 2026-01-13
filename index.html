@@ -1742,50 +1742,72 @@
                             }
                         `;
                     } else if (effectiveSearchTerms.length > 0) {
-                        // Query by search terms - search in token name
-                        // Use first word only and sanitize for GraphQL
-                        const searchTerm = effectiveSearchTerms[0]
-                            .split(' ')[0]  // First word only
-                            .replace(/[^a-zA-Z0-9]/g, '');  // Remove special chars
-                        objktQuery = `
-                            query GetFilteredArt {
-                                token(
-                                    where: {
-                                        name: {_ilike: "%${searchTerm}%"},
-                                        artifact_uri: {_is_null: false},
-                                        display_uri: {_is_null: false}
-                                    },
-                                    limit: ${limit},
-                                    order_by: {timestamp: desc}
-                                ) {
-                                    pk
-                                    name
-                                    mime
-                                    artifact_uri
-                                    display_uri
-                                    thumbnail_uri
-                                    supply
-                                    token_id
-                                    fa_contract
-                                    creators {
-                                        holder {
-                                            address
-                                            alias
+                        // Query multiple search terms for variety
+                        const searchTerms = effectiveSearchTerms
+                            .slice(0, 3)  // Use up to 3 terms
+                            .map(t => t.split(' ')[0].replace(/[^a-zA-Z0-9]/g, ''))
+                            .filter(t => t.length > 2);  // Only terms with 3+ chars
+
+                        // Create multiple queries for variety
+                        const objktPromises = searchTerms.map(searchTerm => {
+                            const randomOffset = Math.floor(Math.random() * 100);  // Random offset for variety
+                            const termQuery = `
+                                query GetFilteredArt {
+                                    token(
+                                        where: {
+                                            name: {_ilike: "%${searchTerm}%"},
+                                            artifact_uri: {_is_null: false},
+                                            display_uri: {_is_null: false}
+                                        },
+                                        limit: ${Math.ceil(limit / searchTerms.length)},
+                                        offset: ${randomOffset},
+                                        order_by: {timestamp: desc}
+                                    ) {
+                                        pk
+                                        name
+                                        mime
+                                        artifact_uri
+                                        display_uri
+                                        thumbnail_uri
+                                        supply
+                                        token_id
+                                        fa_contract
+                                        creators {
+                                            holder {
+                                                address
+                                                alias
+                                            }
                                         }
-                                    }
-                                    listings_active(limit: 1, order_by: {price: asc}) {
-                                        price
-                                        currency {
-                                            symbol
-                                            decimals
+                                        listings_active(limit: 1, order_by: {price: asc}) {
+                                            price
+                                            currency {
+                                                symbol
+                                                decimals
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        `;
-                        console.log('objkt: searching for term:', searchTerm);
+                            `;
+                            console.log('objkt: searching for term:', searchTerm, 'offset:', randomOffset);
+                            return fetch('https://data.objkt.com/v3/graphql', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ query: termQuery })
+                            })
+                                .then(r => r.json())
+                                .then(data => ({ type: 'objkt', data }))
+                                .catch(err => {
+                                    console.error('objkt fetch failed:', err);
+                                    return { type: 'objkt', data: { data: { token: [] } } };
+                                });
+                        });
+                        allPromises.push(...objktPromises);
+                        console.log('objkt: created', objktPromises.length, 'search queries');
+                        // Skip the single query code below
+                        objktQuery = null;
                     } else {
-                        // No filters - get recent tokens
+                        // No filters - get recent tokens with random offset for variety
+                        const randomOffset = Math.floor(Math.random() * 200);
                         objktQuery = `
                             query GetRecentArt {
                                 token(
@@ -1794,6 +1816,7 @@
                                         display_uri: {_is_null: false}
                                     },
                                     limit: ${limit},
+                                    offset: ${randomOffset},
                                     order_by: {timestamp: desc}
                                 ) {
                                     pk
@@ -1821,36 +1844,40 @@
                                 }
                             }
                         `;
+                        console.log('objkt: fetching recent with offset:', randomOffset);
                     }
 
-                    console.log('objkt: starting fetch with query limit:', limit);
-                    const objktPromise = fetch('https://data.objkt.com/v3/graphql', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ query: objktQuery })
-                    })
-                        .then(r => {
-                            console.log('objkt: received response, status:', r.status);
-                            if (!r.ok) {
-                                console.error('objkt API error:', r.status, r.statusText);
-                                return { data: { token: [] } };
-                            }
-                            return r.json();
+                    // Only run single query if objktQuery was set (not null from multi-query)
+                    if (objktQuery) {
+                        console.log('objkt: starting fetch with query limit:', limit);
+                        const objktPromise = fetch('https://data.objkt.com/v3/graphql', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ query: objktQuery })
                         })
-                        .then(data => {
-                            console.log('objkt raw response:', data);
-                            if (data.errors) {
-                                console.error('objkt GraphQL errors:', data.errors);
-                            }
-                            return { type: 'objkt', data };
-                        })
-                        .catch(err => {
-                            console.error('objkt fetch failed:', err);
-                            return { type: 'objkt', data: { data: { token: [] } } };
-                        });
+                            .then(r => {
+                                console.log('objkt: received response, status:', r.status);
+                                if (!r.ok) {
+                                    console.error('objkt API error:', r.status, r.statusText);
+                                    return { data: { token: [] } };
+                                }
+                                return r.json();
+                            })
+                            .then(data => {
+                                console.log('objkt raw response:', data);
+                                if (data.errors) {
+                                    console.error('objkt GraphQL errors:', data.errors);
+                                }
+                                return { type: 'objkt', data };
+                            })
+                            .catch(err => {
+                                console.error('objkt fetch failed:', err);
+                                return { type: 'objkt', data: { data: { token: [] } } };
+                            });
 
-                    allPromises.push(objktPromise);
-                    console.log('objkt: promise added to allPromises');
+                        allPromises.push(objktPromise);
+                        console.log('objkt: promise added to allPromises');
+                    }
                 }
 
                 // === EXCHANGE.ART (Solana NFTs) ===
