@@ -97,56 +97,14 @@
             --gg-dark: #0a0a0a;
             --gg-gray: #222;
         }
-        /* Seizure Safe Mode */
-        .seizure-safe-btn {
-            background: rgba(0, 200, 100, 0.1);
-            border: 1px solid rgba(0, 200, 100, 0.3);
-            color: rgba(0, 200, 100, 0.9);
-            padding: 10px 20px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.85rem;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-            border-radius: 25px;
-        }
-        .seizure-safe-btn:hover {
-            background: rgba(0, 200, 100, 0.2);
-            border-color: rgba(0, 200, 100, 0.6);
-        }
+        /* Seizure Safe Mode - active state */
         .seizure-safe-btn.active {
-            background: rgba(0, 200, 100, 0.3);
-            border-color: #00c864;
-            color: #00c864;
-            box-shadow: 0 0 10px rgba(0, 200, 100, 0.3);
+            background: #2ecc71 !important;
+            border-color: #2ecc71 !important;
+            color: #fff !important;
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
         }
-        /* SFW/NSFW Toggle */
-        .sfw-btn {
-            background: rgba(100, 150, 255, 0.1);
-            border: 1px solid rgba(100, 150, 255, 0.3);
-            color: rgba(100, 150, 255, 0.9);
-            padding: 10px 20px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.85rem;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-            border-radius: 25px;
-        }
-        .sfw-btn:hover {
-            background: rgba(100, 150, 255, 0.2);
-            border-color: rgba(100, 150, 255, 0.6);
-        }
-        .sfw-btn.sfw-active {
-            background: rgba(100, 150, 255, 0.3);
-            border-color: #6496ff;
-            color: #6496ff;
-        }
-        .sfw-btn.nsfw-active {
-            background: rgba(255, 100, 100, 0.3);
-            border-color: #ff6464;
-            color: #ff6464;
-        }
+        /* SFW/NSFW Toggle - active states handled by JS inline styles */
         body.seizure-safe-mode .art-media img,
         body.seizure-safe-mode .art-media video {
             filter: contrast(0.85) saturate(0.7);
@@ -250,38 +208,42 @@
             pointer-events: none;
             z-index: 100;
         }
-        .nav-btns { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-        .nav-btn {
+        .nav-btns { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        /* Unified nav pill base style */
+        .nav-btn, .filter-toggle, .sfw-btn, .seizure-safe-btn {
             background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.15);
             color: rgba(255,255,255,0.8);
-            padding: 10px 24px;
+            padding: 10px 18px;
             cursor: pointer;
             font-family: inherit;
-            font-size: 0.85rem;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 25px;
             backdrop-filter: blur(10px);
             position: relative;
             overflow: hidden;
+            white-space: nowrap;
         }
-        .nav-btn::before {
+        .nav-btn::before, .filter-toggle::before, .sfw-btn::before, .seizure-safe-btn::before {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, rgba(255,0,110,0.1), rgba(131,56,236,0.1), rgba(58,134,255,0.1));
+            background: linear-gradient(135deg, rgba(255,0,110,0.15), rgba(131,56,236,0.15), rgba(58,134,255,0.15));
             opacity: 0;
             transition: opacity 0.3s ease;
         }
-        .nav-btn:hover::before {
+        .nav-btn:hover::before, .filter-toggle:hover::before, .sfw-btn:hover::before, .seizure-safe-btn:hover::before {
             opacity: 1;
         }
-        .nav-btn:hover {
-            border-color: rgba(131,56,236,0.5);
+        .nav-btn:hover, .filter-toggle:hover, .sfw-btn:hover, .seizure-safe-btn:hover {
+            border-color: rgba(131,56,236,0.6);
             color: #fff;
-            box-shadow: 0 0 20px rgba(131,56,236,0.3), inset 0 0 20px rgba(131,56,236,0.1);
-            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(131,56,236,0.4), 0 0 40px rgba(255,0,110,0.2);
+            transform: translateY(-2px) scale(1.02);
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
         }
         .nav-btn.active {
             background: linear-gradient(135deg, rgba(255,0,110,0.2), rgba(131,56,236,0.3));
@@ -371,17 +333,34 @@
             will-change: transform;
             transform: translateZ(0);
             backface-visibility: hidden;
+            height: 170px;
+            flex-shrink: 0;
         }
         .dopamine-row .art-card {
             flex-shrink: 0;
             width: 200px !important;
+            height: 165px !important;
+            contain-intrinsic-size: 200px 165px;
         }
         .dopamine-row .art-media {
-            height: 150px !important;
+            height: 130px !important;
         }
         .dopamine-row .art-info {
-            padding: 5px;
+            padding: 4px 6px;
+            font-size: 0.55rem;
+            height: 30px;
+            overflow: hidden;
+        }
+        .dopamine-row .art-info h3 {
             font-size: 0.6rem;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .dopamine-row .save-btn {
+            padding: 3px 6px;
+            font-size: 0.5rem;
         }
         /* Mobile responsive styles */
         @media (max-width: 768px) {
@@ -395,9 +374,9 @@
                 gap: 8px;
                 flex-wrap: wrap;
             }
-            .nav-btn, .filter-toggle {
+            .nav-btn, .filter-toggle, .sfw-btn, .seizure-safe-btn {
                 padding: 6px 12px;
-                font-size: 0.8rem;
+                font-size: 0.75rem;
             }
             .filter-panel {
                 top: auto;
@@ -411,8 +390,9 @@
             .art-card { width: 250px; }
             .art-media { height: 250px; }
             .gallery-container { padding-top: 100px; }
-            .dopamine-row .art-card { width: 150px !important; }
-            .dopamine-row .art-media { height: 120px !important; }
+            .dopamine-row { height: 140px; }
+            .dopamine-row .art-card { width: 150px !important; height: 135px !important; }
+            .dopamine-row .art-media { height: 105px !important; }
             .fullscreen-modal img {
                 max-width: 95vw;
                 max-height: 60vh;
@@ -428,8 +408,9 @@
             h1 { font-size: 1rem; }
             .art-card { width: 200px; }
             .art-media { height: 200px; }
-            .dopamine-row .art-card { width: 120px !important; }
-            .dopamine-row .art-media { height: 100px !important; }
+            .dopamine-row { height: 120px; }
+            .dopamine-row .art-card { width: 120px !important; height: 115px !important; }
+            .dopamine-row .art-media { height: 85px !important; }
             .filter-section h4 { font-size: 0.75rem; }
         }
         .art-media {
@@ -878,36 +859,7 @@
             98.5% { opacity: 0.98; }
         }
         body { animation: screen-flicker 8s infinite; }
-        .filter-toggle {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.15);
-            color: rgba(255,255,255,0.8);
-            padding: 8px 20px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.85rem;
-            margin-left: 15px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .filter-toggle::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(255,0,110,0.1), rgba(131,56,236,0.1));
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .filter-toggle:hover::before { opacity: 1; }
-        .filter-toggle:hover {
-            border-color: rgba(131,56,236,0.5);
-            color: #fff;
-            box-shadow: 0 0 15px rgba(131,56,236,0.25);
-            transform: translateY(-1px);
-        }
+        /* Filter toggle active state */
         .filter-toggle.active {
             background: linear-gradient(135deg, rgba(255,0,110,0.15), rgba(131,56,236,0.25));
             border-color: rgba(131,56,236,0.5);
@@ -952,6 +904,17 @@
             border-color: rgba(131,56,236,0.6);
             color: #fff;
             box-shadow: 0 0 15px rgba(131,56,236,0.35);
+        }
+        .filter-tag.coming-soon {
+            background: rgba(50,50,50,0.5);
+            border-color: rgba(100,100,100,0.3);
+            color: #666;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .filter-tag.coming-soon:hover {
+            transform: none;
+            box-shadow: none;
         }
         .filter-actions {
             display: flex;
@@ -1388,6 +1351,21 @@
                 name: 'Abstract & Generative',
                 color: '#00bcd4',
                 terms: ['abstract art', 'generative art', 'geometric', 'pattern', 'fractal', 'op art', 'constructivism', 'algorithmic art', 'procedural', 'code art']
+            },
+            webNostalgia: {
+                name: 'Internet Nostalgia',
+                color: '#00ff00',
+                terms: ['90s website', 'geocities', 'old internet', 'web design', 'y2k aesthetic', 'retro internet', 'vintage web', 'old web', 'website screenshot', 'early internet', 'netscape', 'web 1.0', 'internet aesthetic', 'cyber y2k', 'windows 95', 'windows 98', 'ms paint', 'pixel cursor', 'under construction gif']
+            },
+            anime: {
+                name: 'Anime & Manga',
+                color: '#ff69b4',
+                terms: ['anime', 'manga', 'anime art', 'anime aesthetic', 'studio ghibli', 'anime girl', 'anime boy', 'anime scenery', 'anime wallpaper', 'kawaii', 'chibi', 'otaku', 'weeb', 'anime gif', 'sakura', 'mecha', 'shonen', 'seinen', 'slice of life anime', 'anime landscape', 'lofi anime', 'anime vibes']
+            },
+            nostalgia: {
+                name: 'Nostalgia & Retro',
+                color: '#daa520',
+                terms: ['nostalgia', 'retro', 'vintage', '80s', '90s', '2000s', 'throwback', 'old school', 'retro aesthetic', 'vintage aesthetic', 'childhood', 'memories', 'classic', 'antique', 'film grain', 'polaroid', 'vhs aesthetic', 'cassette', 'floppy disk', 'crt monitor', 'old tv', 'arcade', 'vintage gaming', 'blockbuster']
             }
         };
 
@@ -1491,7 +1469,40 @@
             'CHANNELING PURE CHAOS...'
         ];
 
+        // Silly NSFW loading phrases (playfully scolding)
+        const nsfwLoadingPhrases = [
+            'OH YOU BAD BOY...',
+            'I\'M GONNA TELL YOUR MOM...',
+            'NAUGHTY NAUGHTY...',
+            'CLOSING MY EYES WHILE LOADING...',
+            'HOPE NOBODY\'S BEHIND YOU...',
+            'INCOGNITO MODE RECOMMENDED...',
+            'YOU SURE ABOUT THIS?...',
+            'LOCKING THE DOOR FOR YOU...',
+            'PRETENDING I DIDN\'T SEE THAT CLICK...',
+            'YOUR SEARCH HISTORY WEEPS...',
+            'FBI AGENT LOOKING AWAY...',
+            'VPN ACTIVATED... JUST KIDDING...',
+            'PARENTAL CONTROLS? NEVER HEARD OF HER...',
+            'BONK! GO TO HORNY JAIL...',
+            'THIS BETTER BE FOR "ART"...',
+            'YOUR GRANDMOTHER WOULD BE DISAPPOINTED...',
+            'GOD IS WATCHING... BUT SO ARE YOU...',
+            'RESPECT THE ARTWORK... IF YOU CAN...',
+            'CLEAR BROWSER HISTORY LATER...',
+            'SHAME.EXE LOADING...',
+            'ACTIVATING ADULT MODE...',
+            'WARNING: SPICY CONTENT AHEAD...',
+            'I WON\'T JUDGE... MUCH...',
+            'PURELY ACADEMIC INTEREST, RIGHT?...',
+            'ART APPRECIATION INTENSIFIES...'
+        ];
+
         function getRandomLoadingPhrase() {
+            // Use NSFW phrases when in NSFW mode
+            if (!sfwMode) {
+                return nsfwLoadingPhrases[Math.floor(Math.random() * nsfwLoadingPhrases.length)];
+            }
             return loadingPhrases[Math.floor(Math.random() * loadingPhrases.length)];
         }
 
@@ -2501,7 +2512,8 @@
 
                 // Calculate how many items per row and how many rows to fill screen
                 const itemsPerRow = Math.ceil(window.innerWidth / 200) + 2;
-                const numRows = Math.ceil((window.innerHeight - 65) / 180);
+                const rowHeight = 176; // 170px row + 6px gap
+                const numRows = Math.max(3, Math.ceil((window.innerHeight - 65) / rowHeight));
 
                 // Smart shuffle gifs for variety (no adjacent duplicates, spread artists)
                 const shuffled = smartShuffle([...displayGifs].sort(() => Math.random() - 0.5));
@@ -2900,7 +2912,8 @@
                 if (!fullscreenOpen) {
                     if (dopamineMode) {
                         // Dopamine Rush: alternating rows scrolling left/right
-                        const numRows = Math.ceil((window.innerHeight - 65) / 180);
+                        const rowHeight = 176; // 170px row + 6px gap
+                        const numRows = Math.max(3, Math.ceil((window.innerHeight - 65) / rowHeight));
 
                         // Re-cache rows if count changed (new rows added)
                         if (numRows !== animLastRowCount) {
@@ -3054,6 +3067,7 @@
             activePreset = 'all';
             renderFilterTags();
             renderArtWheel();
+            closeFilterPanel();
             applyFilters(); // Random art auto-applies
         }
 
@@ -3072,7 +3086,10 @@
             nft: [],
             photography: ['ExposurePorn', 'LongExposurePics', 'itookapicture', 'photocritique'],
             aesthetic: ['VaporwaveAesthetics', 'outrun', 'Cyberpunk', 'currentlytripping', 'woahdude', 'trippy'],
-            abstract: ['AbstractArt', 'generative', 'PlotterArt', 'proceduralgeneration']
+            abstract: ['AbstractArt', 'generative', 'PlotterArt', 'proceduralgeneration'],
+            webNostalgia: ['vintagecomputing', 'retrobattlestations', 'nostalgia', 'oldweb', 'internetarchive', 'retrowebdev'],
+            anime: ['anime', 'Animewallpaper', 'AnimeART', 'wholesomeanimemes', 'animegifs', 'Moescape', 'AnimeSketch', 'ImaginarySliceOfLife'],
+            nostalgia: ['nostalgia', 'OldSchoolCool', 'retrogaming', 'VintageApple', 'vintagecomputing', '90s', '80s', 'retrobattlestations', 'cassetteculture']
         };
 
         // Apply a category preset from the Art Wheel
@@ -3086,7 +3103,17 @@
             renderFilterTags();
             renderRedditTags();
             renderArtWheel();
+            // Close filter panel when selecting from Art Wheel
+            closeFilterPanel();
             applyFilters();
+        }
+
+        // Close filter panel helper
+        function closeFilterPanel() {
+            const panel = document.getElementById('filterPanel');
+            if (panel && panel.classList.contains('active')) {
+                panel.classList.remove('active');
+            }
         }
 
         // Render the Art Wheel with active state
@@ -3108,16 +3135,22 @@
                 { key: 'photography', name: 'Photo', color: filterCategories.photography.color, textColor: '#fff' },
                 { key: 'aesthetic', name: 'Aesthetic', color: filterCategories.aesthetic.color, textColor: '#fff' },
                 { key: 'abstract', name: 'Abstract', color: filterCategories.abstract.color, textColor: '#fff' },
+                { key: 'webNostalgia', name: 'Web Nostalgia', color: filterCategories.webNostalgia.color, textColor: '#000' },
+                { key: 'anime', name: 'Anime', color: filterCategories.anime.color, textColor: '#fff' },
+                { key: 'nostalgia', name: 'Nostalgia', color: filterCategories.nostalgia.color, textColor: '#fff' },
                 { key: 'publicDomain', name: 'Public Domain', color: '#333', textColor: '#fff' }
             ];
 
             container.innerHTML = presetButtons.map(btn => {
                 const isActive = activePreset === btn.key;
-                const activeStyle = isActive ? 'box-shadow:0 0 15px ' + btn.color + ',inset 0 0 0 2px #fff;transform:scale(1.05);' : 'opacity:0.8;';
+                // Active: full color with glow. Inactive: muted gray with subtle border
+                const activeStyle = isActive
+                    ? `background:${btn.color};color:${btn.textColor};box-shadow:0 0 15px ${btn.color},inset 0 0 0 2px #fff;transform:scale(1.05);`
+                    : `background:rgba(50,50,50,0.8);color:#888;border:1px solid rgba(255,255,255,0.2);`;
                 const clickHandler = btn.key === 'all' ? 'clearAllFilters()' :
                                      btn.key === 'publicDomain' ? 'applyPublicDomain()' :
                                      `applyCategoryPreset('${btn.key}')`;
-                return `<button class="preset-btn" style="background:${btn.color};color:${btn.textColor};${activeStyle}" onclick="${clickHandler}">${btn.name}${isActive ? ' ✓' : ''}</button>`;
+                return `<button class="preset-btn" style="${activeStyle}" onclick="${clickHandler}">${btn.name}${isActive ? ' ✓' : ''}</button>`;
             }).join('');
 
             // Update indicator
@@ -3203,6 +3236,7 @@
             renderSourceControls();
             renderFilterTags();
             renderArtWheel();
+            closeFilterPanel();
             applyFilters(); // Preset auto-applies
         }
 
@@ -3214,23 +3248,38 @@
             pixabay: 'Pixabay', nasa: 'NASA'
         };
 
+        // Sources that are not yet available (no public API or needs setup)
+        const comingSoonSources = ['exchange', 'mallow', 'foster', 'pixabay'];
+
         function renderSourceToggles() {
             const container = document.getElementById('sourceToggles');
-            container.innerHTML = Object.keys(sourcesEnabled).map(source => `
-                <span class="filter-tag ${sourcesEnabled[source] ? 'active' : ''}" onclick="toggleSource('${source}')">${sourceNames[source]}</span>
-            `).join('');
+            container.innerHTML = Object.keys(sourcesEnabled).map(source => {
+                const isComingSoon = comingSoonSources.includes(source);
+                if (isComingSoon) {
+                    return `<span class="filter-tag coming-soon" title="Coming Soon - API integration in progress">${sourceNames[source]} <small>(Soon)</small></span>`;
+                }
+                return `<span class="filter-tag ${sourcesEnabled[source] ? 'active' : ''}" onclick="toggleSource('${source}')">${sourceNames[source]}</span>`;
+            }).join('');
         }
 
         function renderSourceControls() {
             const container = document.getElementById('sourceControls');
-            container.innerHTML = Object.keys(sourcesEnabled).map(source => `
-                <div class="source-control ${sourcesEnabled[source] ? '' : 'disabled'}" id="ctrl_${source}">
+            container.innerHTML = Object.keys(sourcesEnabled).map(source => {
+                const isComingSoon = comingSoonSources.includes(source);
+                if (isComingSoon) {
+                    return `<div class="source-control coming-soon" id="ctrl_${source}">
+                        <span class="source-name" style="color:#666;">${sourceNames[source]} <small>(Coming Soon)</small></span>
+                        <input type="range" class="source-weight" min="0" max="3" step="0.5" value="0" disabled style="opacity:0.3;">
+                        <span class="weight-val" style="color:#666;">--</span>
+                    </div>`;
+                }
+                return `<div class="source-control ${sourcesEnabled[source] ? '' : 'disabled'}" id="ctrl_${source}">
                     <span class="source-name ${sourcesEnabled[source] ? '' : 'off'}">${sourceNames[source]}</span>
                     <input type="range" class="source-weight" min="0" max="3" step="0.5" value="${sourceWeights[source]}"
                            oninput="updateWeight('${source}', this.value)">
                     <span class="weight-val" id="weight_${source}">${sourceWeights[source]}x</span>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
 
         let reloadTimeout = null;
@@ -3393,12 +3442,14 @@
                 btn.textContent = 'SFW: ON';
                 btn.title = 'Safe For Work mode - click for NSFW (18+)';
                 btn.style.background = '#3a86ff';
+                btn.style.color = '#fff';
             } else {
                 btn.classList.remove('sfw-active');
                 btn.classList.add('nsfw-active');
                 btn.textContent = 'NSFW: ON';
                 btn.title = 'NSFW mode - adult content visible. Click for SFW';
                 btn.style.background = '#ff6464';
+                btn.style.color = '#fff';
             }
         }
 
@@ -3783,7 +3834,12 @@
         }
 
         function allSourcesOn() {
-            Object.keys(sourcesEnabled).forEach(s => sourcesEnabled[s] = true);
+            Object.keys(sourcesEnabled).forEach(s => {
+                // Skip coming soon sources
+                if (!comingSoonSources.includes(s)) {
+                    sourcesEnabled[s] = true;
+                }
+            });
             renderSourceToggles();
             renderSourceControls();
             updatePendingChangesIndicator();
