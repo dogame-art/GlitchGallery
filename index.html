@@ -1330,7 +1330,7 @@
             // Photography & visual
             'ExposurePorn', 'LongExposurePics', 'itookapicture', 'photocritique'
         ];
-        let redditSubs = [...allRedditSubs];
+        let redditSubs = []; // Off by default - presets can enable specific subreddits
 
         // Organized filter categories
         const filterCategories = {
@@ -3060,13 +3060,31 @@
         // Track which preset is currently active
         let activePreset = 'all'; // 'all' means no filters (random art)
 
+        // Subreddit mappings for each category preset
+        const categorySubreddits = {
+            glitch: ['glitch_art', 'VaporwaveAesthetics', 'pixelsorting', 'brokengifs', 'gonwild'],
+            traditional: ['Art', 'museum', 'ArtPorn', 'Illustration'],
+            digital: ['DigitalArt', 'ImaginaryLandscapes', 'ImaginaryCharacters', 'Cyberpunk'],
+            pixel: ['PixelArt', 'outrun'],
+            animation: ['animation', 'HighQualityGifs', 'Cinemagraphs', 'SplitDepthGIFS', 'loadingicon', 'perfectloops'],
+            threeD: ['generative', 'proceduralgeneration'],
+            ai: ['generative'],
+            nft: [],
+            photography: ['ExposurePorn', 'LongExposurePics', 'itookapicture', 'photocritique'],
+            aesthetic: ['VaporwaveAesthetics', 'outrun', 'Cyberpunk', 'currentlytripping', 'woahdude', 'trippy'],
+            abstract: ['AbstractArt', 'generative', 'PlotterArt', 'proceduralgeneration']
+        };
+
         // Apply a category preset from the Art Wheel
         function applyCategoryPreset(categoryKey) {
             const category = filterCategories[categoryKey];
             if (!category) return;
             searchTerms = [...category.terms];
             activePreset = categoryKey;
+            // Set relevant subreddits for this category
+            redditSubs = categorySubreddits[categoryKey] ? [...categorySubreddits[categoryKey]] : [];
             renderFilterTags();
+            renderRedditTags();
             renderArtWheel();
             applyFilters();
         }
