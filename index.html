@@ -1743,7 +1743,10 @@
                         `;
                     } else if (effectiveSearchTerms.length > 0) {
                         // Query by search terms - search in token name
-                        const searchTerm = effectiveSearchTerms[0].replace(/'/g, '');
+                        // Use first word only and sanitize for GraphQL
+                        const searchTerm = effectiveSearchTerms[0]
+                            .split(' ')[0]  // First word only
+                            .replace(/[^a-zA-Z0-9]/g, '');  // Remove special chars
                         objktQuery = `
                             query GetFilteredArt {
                                 token(
