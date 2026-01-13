@@ -2128,12 +2128,18 @@
                                 try {
                                     // Convert IPFS URIs to gateway URLs
                                     let displayUrl = token.display_uri || token.thumbnail_uri || token.artifact_uri;
-                                    if (displayUrl && displayUrl.startsWith('ipfs://')) {
-                                        // Use nftstorage.link - optimized for NFT content
-                                        displayUrl = displayUrl.replace('ipfs://', 'https://nftstorage.link/ipfs/');
+                                    if (displayUrl) {
+                                        if (displayUrl.startsWith('ipfs://')) {
+                                            // Handle ipfs:// protocol
+                                            displayUrl = displayUrl.replace('ipfs://', 'https://nftstorage.link/ipfs/');
+                                        } else if (displayUrl.startsWith('Qm') || displayUrl.startsWith('bafy') || displayUrl.startsWith('bafk')) {
+                                            // Handle raw IPFS CIDs (v0 starts with Qm, v1 starts with bafy/bafk)
+                                            displayUrl = 'https://nftstorage.link/ipfs/' + displayUrl;
+                                        }
+                                        // If it's already a full URL (https://), leave it as is
                                     }
 
-                                    if (displayUrl) {
+                                    if (displayUrl && displayUrl.startsWith('http')) {
                                         const artist = token.creators?.[0]?.holder?.alias ||
                                                       token.creators?.[0]?.holder?.address?.slice(0, 8) + '...' ||
                                                       'Unknown';
