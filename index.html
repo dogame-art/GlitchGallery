@@ -963,6 +963,11 @@
             pointer-events: none;
             animation: btn-glitch 0.3s infinite;
         }
+        .refresh-btn.active {
+            background: linear-gradient(135deg, rgba(58,134,255,0.2), rgba(131,56,236,0.3));
+            border-color: rgba(58,134,255,0.6);
+            box-shadow: 0 0 15px rgba(58,134,255,0.3);
+        }
         @keyframes btn-glitch {
             0%, 100% { transform: translate(0); filter: hue-rotate(0deg); }
             20% { transform: translate(-2px, 1px); filter: hue-rotate(90deg); }
@@ -1314,6 +1319,7 @@
             <button class="sfw-btn sfw-active" id="sfwBtn" onclick="toggleSfwMode()" title="Toggle Safe For Work / NSFW content">SFW</button>
             <button class="seizure-safe-btn" id="seizureSafeBtn" onclick="toggleSeizureSafe()" title="Reduces flashing, shows static images, filters strobe content">Seizure Safe</button>
             <button class="refresh-btn" id="refreshBtn" onclick="glitchRefresh()" title="Glitch shuffle - load fresh content">⚡ Shuffle</button>
+            <button class="refresh-btn" id="autoShuffleBtn" onclick="toggleAutoShuffle()" title="Toggle auto-shuffle (click to toggle, default 5 min)">Auto: 5m</button>
             <div class="music-player" id="musicPlayer">
                 <button class="music-main-btn" id="musicBtn" onclick="toggleMusic()" title="Toggle lofi music">🎵 Lofi</button>
                 <div class="music-controls">
@@ -1535,26 +1541,42 @@
         const NSFW_TAGS = ['nsfw', 'nude', 'nudity', 'porn', 'xxx', 'adult', 'explicit', 'sexy', 'erotic', 'hentai', 'rule34', 'lewd', 'naked', 'sex', 'boobs', 'ass', 'dick', 'pussy', 'fetish', 'kink', 'bondage', 'bdsm'];
 
         // Deduplication tracking
-        const seenUrls = new Set(); // Track URLs to prevent duplicate images
+        const seenUrls = new Set(); // Track URLs for current batch
         const artistCountMap = new Map(); // Track how many items per artist
-        const sessionSeenObjktPKs = new Set(); // Track objkt tokens shown this session (never clears until page refresh)
+        const sessionSeenIds = new Set(); // Track ALL item IDs shown this session (NEVER clears - prevents repeats)
+        const sessionSeenUrls = new Set(); // Track ALL URLs shown this session (NEVER clears)
 
-        // Helper to add gif only if URL not seen before
+        // Helper to add gif only if not seen before in this session
         function addGifIfUnique(gif) {
             const url = gif.images?.fixed_height?.url || gif.images?.original?.url;
+            const id = gif.id;
+
+            // Check session-level deduplication (never shows same content twice per session)
+            if (id && sessionSeenIds.has(id)) return false;
+            if (url && sessionSeenUrls.has(url)) return false;
+
+            // Check batch-level deduplication
             if (!url || seenUrls.has(url)) return false;
+
+            // Track at both levels
             seenUrls.add(url);
+            if (id) sessionSeenIds.add(id);
+            if (url) sessionSeenUrls.add(url);
+
             // Also add to gifIdSet for dopamine mode dedup
-            const baseId = gif.id?.split('_').slice(0, 2).join('_');
+            const baseId = id?.split('_').slice(0, 2).join('_');
             if (baseId) gifIdSet.add(baseId);
+
             allGifs.push(gif);
             return true;
         }
 
-        // Clear all deduplication caches (call when resetting gallery)
+        // Clear batch caches (call when refreshing - session caches remain!)
         function clearDedupCaches() {
             seenUrls.clear();
             gifIdSet.clear();
+            // NOTE: sessionSeenIds and sessionSeenUrls are NOT cleared
+            // This ensures we never show the same content twice in a session
         }
 
         // objkt.com artist handle filter (e.g., "tz1abc..." or artist alias)
@@ -2433,14 +2455,9 @@
                             const tokens = result.data?.data?.token || [];
                             console.log(`objkt returned ${tokens.length} tokens`, result.data);
                             let objktAddedCount = 0;
-                            let objktSessionSkipped = 0;
                             tokens.forEach(token => {
                                 try {
-                                    // Skip tokens we've already shown this session
-                                    if (sessionSeenObjktPKs.has(token.pk)) {
-                                        objktSessionSkipped++;
-                                        return; // Already shown this token
-                                    }
+                                    // Session dedup now handled globally by addGifIfUnique
 
                                     // Convert IPFS URIs to gateway URLs
                                     let displayUrl = token.display_uri || token.thumbnail_uri || token.artifact_uri;
@@ -2509,14 +2526,13 @@
                                         });
                                         if (added) {
                                             objktAddedCount++;
-                                            sessionSeenObjktPKs.add(token.pk); // Track for session deduplication
                                         }
                                     }
                                 } catch (tokenErr) {
                                     console.error('Error processing objkt token:', tokenErr, token);
                                 }
                             });
-                            console.log(`objkt: added ${objktAddedCount} new items (${objktSessionSkipped} already shown this session, ${sessionSeenObjktPKs.size} total in session)`);
+                            console.log(`objkt: added ${objktAddedCount} new items (session total: ${sessionSeenIds.size} items tracked)`);
                         } catch (objktErr) {
                             console.error('Error processing objkt results:', objktErr);
                         }
@@ -3939,6 +3955,68 @@
 
         // Glitch Refresh - seamless content shuffle with visual effects
         let isRefreshing = false;
+        let autoShuffleEnabled = localStorage.getItem('autoShuffle') !== 'false'; // Default ON
+        let autoShuffleInterval = parseInt(localStorage.getItem('autoShuffleInterval')) || 5; // Minutes
+        let autoShuffleTimer = null;
+        let lastShuffleTime = Date.now();
+
+        function startAutoShuffle() {
+            stopAutoShuffle(); // Clear any existing timer
+            if (!autoShuffleEnabled) return;
+
+            autoShuffleTimer = setInterval(() => {
+                if (!isRefreshing && !fullscreenOpen) { // Don't shuffle during fullscreen view
+                    console.log('Auto-shuffle triggered');
+                    glitchRefresh();
+                }
+            }, autoShuffleInterval * 60 * 1000);
+
+            console.log(`Auto-shuffle enabled: every ${autoShuffleInterval} minutes`);
+            updateAutoShuffleDisplay();
+        }
+
+        function stopAutoShuffle() {
+            if (autoShuffleTimer) {
+                clearInterval(autoShuffleTimer);
+                autoShuffleTimer = null;
+            }
+        }
+
+        function toggleAutoShuffle() {
+            autoShuffleEnabled = !autoShuffleEnabled;
+            localStorage.setItem('autoShuffle', autoShuffleEnabled);
+
+            const btn = document.getElementById('autoShuffleBtn');
+            if (btn) {
+                btn.classList.toggle('active', autoShuffleEnabled);
+                btn.textContent = autoShuffleEnabled ? `Auto: ${autoShuffleInterval}m` : 'Auto: Off';
+            }
+
+            if (autoShuffleEnabled) {
+                startAutoShuffle();
+            } else {
+                stopAutoShuffle();
+            }
+        }
+
+        function setAutoShuffleInterval(minutes) {
+            autoShuffleInterval = Math.max(1, Math.min(30, parseInt(minutes) || 5));
+            localStorage.setItem('autoShuffleInterval', autoShuffleInterval);
+            startAutoShuffle(); // Restart with new interval
+
+            const btn = document.getElementById('autoShuffleBtn');
+            if (btn && autoShuffleEnabled) {
+                btn.textContent = `Auto: ${autoShuffleInterval}m`;
+            }
+        }
+
+        function updateAutoShuffleDisplay() {
+            const btn = document.getElementById('autoShuffleBtn');
+            if (btn) {
+                btn.classList.toggle('active', autoShuffleEnabled);
+                btn.textContent = autoShuffleEnabled ? `Auto: ${autoShuffleInterval}m` : 'Auto: Off';
+            }
+        }
 
         async function glitchRefresh() {
             if (isRefreshing) return;
@@ -3967,7 +4045,7 @@
             allGifs.length = 0;
             seenUrls.clear();
             gifIdSet.clear();
-            // Note: sessionSeenObjktPKs is NOT cleared - this ensures we never repeat objkt items in this session
+            // Note: sessionSeenIds/sessionSeenUrls are NOT cleared - ensures no repeats across ALL sources
 
             // Load fresh content in background
             try {
@@ -3996,7 +4074,12 @@
             btn.textContent = '⚡ Shuffle';
             isRefreshing = false;
 
-            console.log('Glitch refresh: Complete!');
+            // Reset auto-shuffle timer (so it doesn't fire right after manual shuffle)
+            if (autoShuffleEnabled) {
+                startAutoShuffle();
+            }
+
+            console.log(`Glitch refresh: Complete! (${sessionSeenIds.size} unique items shown this session)`);
         }
 
         // Check if content has flash-related tags
@@ -4882,6 +4965,10 @@
         renderSavedPresets(); // Load saved presets
         showWelcomePopup(); // Show welcome for first-time visitors
         loadGifs();
+
+        // Initialize auto-shuffle
+        updateAutoShuffleDisplay();
+        startAutoShuffle();
     </script>
 </body>
 </html>
