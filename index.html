@@ -1774,16 +1774,34 @@
                         `;
                     }
 
+                    console.log('objkt: starting fetch with query limit:', limit);
                     const objktPromise = fetch('https://data.objkt.com/v3/graphql', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ query: objktQuery })
                     })
-                        .then(r => r.json())
-                        .then(data => ({ type: 'objkt', data }))
-                        .catch(() => ({ type: 'objkt', data: { data: { token: [] } } }));
+                        .then(r => {
+                            console.log('objkt: received response, status:', r.status);
+                            if (!r.ok) {
+                                console.error('objkt API error:', r.status, r.statusText);
+                                return { data: { token: [] } };
+                            }
+                            return r.json();
+                        })
+                        .then(data => {
+                            console.log('objkt raw response:', data);
+                            if (data.errors) {
+                                console.error('objkt GraphQL errors:', data.errors);
+                            }
+                            return { type: 'objkt', data };
+                        })
+                        .catch(err => {
+                            console.error('objkt fetch failed:', err);
+                            return { type: 'objkt', data: { data: { token: [] } } };
+                        });
 
                     allPromises.push(objktPromise);
+                    console.log('objkt: promise added to allPromises');
                 }
 
                 // === EXCHANGE.ART (Solana NFTs) ===
@@ -1993,7 +2011,9 @@
                     allPromises.push(...nasaPromises);
                 }
 
+                console.log('Waiting for', allPromises.length, 'promises to resolve...');
                 const results = await Promise.all(allPromises);
+                console.log('All promises resolved. Got', results.length, 'results');
 
                 updateLoadingStatus('PROCESSING ' + results.length + ' FEEDS...');
 
@@ -2094,70 +2114,82 @@
                     }
 
                     if (result.type === 'objkt') {
-                        const tokens = result.data?.data?.token || [];
-                        console.log(`objkt returned ${tokens.length} tokens`);
-                        tokens.forEach(token => {
-                            // Convert IPFS URIs to gateway URLs
-                            let displayUrl = token.display_uri || token.thumbnail_uri || token.artifact_uri;
-                            if (displayUrl && displayUrl.startsWith('ipfs://')) {
-                                displayUrl = displayUrl.replace('ipfs://', 'https://ipfs.io/ipfs/');
-                            }
+                        try {
+                            const tokens = result.data?.data?.token || [];
+                            console.log(`objkt returned ${tokens.length} tokens`, result.data);
+                            let objktAddedCount = 0;
+                            tokens.forEach(token => {
+                                try {
+                                    // Convert IPFS URIs to gateway URLs (use cloudflare-ipfs for better reliability)
+                                    let displayUrl = token.display_uri || token.thumbnail_uri || token.artifact_uri;
+                                    if (displayUrl && displayUrl.startsWith('ipfs://')) {
+                                        // Use cloudflare IPFS gateway for better speed and reliability
+                                        displayUrl = displayUrl.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/');
+                                    }
 
-                            if (displayUrl) {
-                                const artist = token.creators?.[0]?.holder?.alias ||
-                                              token.creators?.[0]?.holder?.address?.slice(0, 8) + '...' ||
-                                              'Unknown';
-                                const tags = token.tags?.map(t => t.tag?.name).filter(Boolean) || [];
+                                    if (displayUrl) {
+                                        const artist = token.creators?.[0]?.holder?.alias ||
+                                                      token.creators?.[0]?.holder?.address?.slice(0, 8) + '...' ||
+                                                      'Unknown';
+                                        const tags = token.tags?.map(t => t.tag?.name).filter(Boolean) || [];
 
-                                // Parse pricing info
-                                const listing = token.listings_active?.[0];
-                                let price = null;
-                                let priceDisplay = null;
-                                let available = false;
+                                        // Parse pricing info
+                                        const listing = token.listings_active?.[0];
+                                        let price = null;
+                                        let priceDisplay = null;
+                                        let available = false;
 
-                                if (listing) {
-                                    const decimals = listing.currency?.decimals || 6;
-                                    const symbol = listing.currency?.symbol || 'XTZ';
-                                    price = listing.price / Math.pow(10, decimals);
-                                    priceDisplay = `${price.toFixed(2)} ${symbol}`;
-                                    available = true;
+                                        if (listing) {
+                                            const decimals = listing.currency?.decimals || 6;
+                                            const symbol = listing.currency?.symbol || 'XTZ';
+                                            price = listing.price / Math.pow(10, decimals);
+                                            priceDisplay = `${price.toFixed(2)} ${symbol}`;
+                                            available = true;
+                                        }
+
+                                        // Parse edition info
+                                        const totalSupply = token.supply || 1;
+                                        const editionsAvailable = token.editions || token.listings_active_aggregate?.aggregate?.count || 0;
+                                        const editionsSold = totalSupply - editionsAvailable;
+                                        const isOneOfOne = totalSupply === 1;
+                                        let editionDisplay = isOneOfOne ? '1/1' : `${editionsAvailable}/${totalSupply} avail`;
+
+                                        // Build objkt.com URL
+                                        const objktUrl = token.fa_contract && token.token_id
+                                            ? `https://objkt.com/tokens/${token.fa_contract}/${token.token_id}`
+                                            : `https://objkt.com/tokens/${token.pk}`;
+
+                                        const added = addGifIfUnique({
+                                            id: 'objkt_' + token.pk,
+                                            title: token.name || 'Untitled',
+                                            username: artist,
+                                            tags: tags,
+                                            source: 'objkt.com',
+                                            mime: token.mime,
+                                            images: {
+                                                fixed_height: { url: displayUrl },
+                                                original: { url: displayUrl }
+                                            },
+                                            // NFT marketplace data
+                                            externalUrl: objktUrl,
+                                            price: price,
+                                            priceDisplay: priceDisplay,
+                                            available: available,
+                                            supply: totalSupply,
+                                            editionsAvailable: editionsAvailable,
+                                            editionDisplay: editionDisplay,
+                                            isOneOfOne: isOneOfOne
+                                        });
+                                        if (added) objktAddedCount++;
+                                    }
+                                } catch (tokenErr) {
+                                    console.error('Error processing objkt token:', tokenErr, token);
                                 }
-
-                                // Parse edition info
-                                const totalSupply = token.supply || 1;
-                                const editionsAvailable = token.editions || token.listings_active_aggregate?.aggregate?.count || 0;
-                                const editionsSold = totalSupply - editionsAvailable;
-                                const isOneOfOne = totalSupply === 1;
-                                let editionDisplay = isOneOfOne ? '1/1' : `${editionsAvailable}/${totalSupply} avail`;
-
-                                // Build objkt.com URL
-                                const objktUrl = token.fa_contract && token.token_id
-                                    ? `https://objkt.com/tokens/${token.fa_contract}/${token.token_id}`
-                                    : `https://objkt.com/tokens/${token.pk}`;
-
-                                addGifIfUnique({
-                                    id: 'objkt_' + token.pk,
-                                    title: token.name || 'Untitled',
-                                    username: artist,
-                                    tags: tags,
-                                    source: 'objkt.com',
-                                    mime: token.mime,
-                                    images: {
-                                        fixed_height: { url: displayUrl },
-                                        original: { url: displayUrl }
-                                    },
-                                    // NFT marketplace data
-                                    externalUrl: objktUrl,
-                                    price: price,
-                                    priceDisplay: priceDisplay,
-                                    available: available,
-                                    supply: totalSupply,
-                                    editionsAvailable: editionsAvailable,
-                                    editionDisplay: editionDisplay,
-                                    isOneOfOne: isOneOfOne
-                                });
-                            }
-                        });
+                            });
+                            console.log(`objkt: added ${objktAddedCount} unique items to gallery`);
+                        } catch (objktErr) {
+                            console.error('Error processing objkt results:', objktErr);
+                        }
                     }
 
                     // Process Exchange.art results
@@ -2466,10 +2498,17 @@
             }
 
             if (displayGifs.length === 0) {
+                // Check if objkt is the only enabled source for a more specific message
+                const enabledSources = Object.entries(sourcesEnabled).filter(([k,v]) => v).map(([k]) => k);
+                const onlyObjkt = enabledSources.length === 1 && enabledSources[0] === 'objkt';
+                const message = onlyObjkt
+                    ? 'objkt.com is loading... NFTs may take a moment. Check browser console (F12) for details.'
+                    : 'Try enabling more sources or changing filters';
+
                 track.innerHTML = `
                     <div class="loading" style="text-align:center;padding:40px;">
                         <div style="font-size:1.5rem;margin-bottom:15px;">No content found</div>
-                        <div style="color:#888;font-size:0.9rem;">Try enabling more sources or changing filters</div>
+                        <div style="color:#888;font-size:0.9rem;">${message}</div>
                         <button onclick="clearAllFilters();allSourcesOn();applyFilters();"
                                 style="margin-top:20px;padding:12px 24px;background:#8338ec;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:1rem;">
                             Reset to All Art
@@ -4012,6 +4051,9 @@
             // Turn off all sources except objkt
             Object.keys(sourcesEnabled).forEach(s => sourcesEnabled[s] = false);
             sourcesEnabled.objkt = true;
+            // Ensure objkt weight is at least 1
+            if (sourceWeights.objkt < 1) sourceWeights.objkt = 1;
+            console.log('objktOnly: enabled objkt, weight:', sourceWeights.objkt);
             renderSourceToggles();
             renderSourceControls();
             applyFilters(); // Preset auto-applies
