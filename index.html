@@ -102,14 +102,13 @@
             background: rgba(0, 200, 100, 0.1);
             border: 1px solid rgba(0, 200, 100, 0.3);
             color: rgba(0, 200, 100, 0.9);
-            padding: 8px 14px;
+            padding: 10px 20px;
             cursor: pointer;
             font-family: inherit;
-            font-size: 0.75rem;
+            font-size: 0.85rem;
             letter-spacing: 1px;
             transition: all 0.3s ease;
-            border-radius: 20px;
-            margin-right: 15px;
+            border-radius: 25px;
         }
         .seizure-safe-btn:hover {
             background: rgba(0, 200, 100, 0.2);
@@ -126,14 +125,13 @@
             background: rgba(100, 150, 255, 0.1);
             border: 1px solid rgba(100, 150, 255, 0.3);
             color: rgba(100, 150, 255, 0.9);
-            padding: 8px 14px;
+            padding: 10px 20px;
             cursor: pointer;
             font-family: inherit;
-            font-size: 0.75rem;
+            font-size: 0.85rem;
             letter-spacing: 1px;
             transition: all 0.3s ease;
-            border-radius: 20px;
-            margin-right: 15px;
+            border-radius: 25px;
         }
         .sfw-btn:hover {
             background: rgba(100, 150, 255, 0.2);
@@ -252,7 +250,7 @@
             pointer-events: none;
             z-index: 100;
         }
-        .nav-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+        .nav-btns { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
         .nav-btn {
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.1);
@@ -1070,16 +1068,14 @@
     </div>
 
     <header>
-        <div style="display:flex;align-items:center;">
-            <button class="sfw-btn sfw-active" id="sfwBtn" onclick="toggleSfwMode()" title="Toggle Safe For Work / NSFW content">SFW</button>
-            <button class="seizure-safe-btn" id="seizureSafeBtn" onclick="toggleSeizureSafe()" title="Reduces flashing, shows static images, filters strobe content">⚡ Seizure Safe</button>
-            <h1 class="logo">GG <span class="logo-text">GLITCH GALLERY</span></h1>
-        </div>
+        <h1 class="logo">GG <span class="logo-text">GLITCH GALLERY</span></h1>
         <div class="nav-btns">
             <button class="nav-btn active" onclick="showGallery()">Gallery</button>
             <button class="nav-btn" onclick="showSaved()">Saved <span class="saved-count" id="savedCount">0</span></button>
             <button class="filter-toggle" onclick="toggleFilters()">Filters</button>
             <button class="filter-toggle" onclick="toggleSettings()">Settings</button>
+            <button class="sfw-btn sfw-active" id="sfwBtn" onclick="toggleSfwMode()" title="Toggle Safe For Work / NSFW content">SFW</button>
+            <button class="seizure-safe-btn" id="seizureSafeBtn" onclick="toggleSeizureSafe()" title="Reduces flashing, shows static images, filters strobe content">Seizure Safe</button>
         </div>
     </header>
 
@@ -2979,11 +2975,11 @@
             if (seizureSafeMode) {
                 document.body.classList.add('seizure-safe-mode');
                 btn.classList.add('active');
-                btn.innerHTML = '✓ Seizure Safe';
+                btn.textContent = 'Seizure Safe ON';
             } else {
                 document.body.classList.remove('seizure-safe-mode');
                 btn.classList.remove('active');
-                btn.innerHTML = '⚡ Seizure Safe';
+                btn.textContent = 'Seizure Safe';
             }
         }
 
