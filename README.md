@@ -31,6 +31,24 @@ Just open `index.html` in a browser or deploy to GitHub Pages.
 
 All saved items and settings are stored locally in your browser using localStorage. Nothing is sent to any server.
 
+## Known Issues / TODO
+
+**API Sources Needing Fixes:**
+
+- [ ] **Bluesky** - CORS blocked (needs backend proxy or server-side fetch)
+- [ ] **Archive.org** - CORS blocked (needs backend proxy or server-side fetch)
+- [ ] **Pexels** - API key expired/invalid (401 error - need new API key)
+- [ ] **Tumblr** - Rate limited (429 error - hitting API limits, may need auth or caching)
+
+**Working Sources:**
+- [x] Tenor
+- [x] Giphy
+- [x] objkt.com (Tezos NFTs)
+- [x] NASA
+- [x] Wikipedia
+- [x] DeviantArt
+- [x] Reddit (partial - some CORS issues)
+
 ## License
 
 MIT
