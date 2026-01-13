@@ -78,16 +78,16 @@
             text-transform: uppercase;
         }
         @keyframes logo-flicker {
-            0%, 95%, 100% { filter: none; }
-            96% { filter: brightness(1.5) hue-rotate(10deg); }
-            97% { filter: brightness(0.8); }
-            98% { filter: brightness(1.2) hue-rotate(-10deg); }
+            0%, 96%, 100% { filter: none; }
+            97% { filter: brightness(1.2) hue-rotate(5deg); }
+            98% { filter: brightness(0.95); }
+            99% { filter: brightness(1.1) hue-rotate(-5deg); }
         }
         @keyframes logo-ghost {
-            0%, 90%, 100% { opacity: 0; transform: translateX(0); }
-            92% { opacity: 0.5; transform: translateX(-3px); }
-            94% { opacity: 0; transform: translateX(3px); }
-            96% { opacity: 0.3; transform: translateX(-2px); }
+            0%, 93%, 100% { opacity: 0; transform: translateX(0); }
+            94% { opacity: 0.3; transform: translateX(-2px); }
+            95% { opacity: 0; transform: translateX(2px); }
+            96% { opacity: 0.2; transform: translateX(-1px); }
         }
         /* Brand colors */
         :root {
@@ -188,10 +188,10 @@
             60% { opacity: 0.5; box-shadow: -3px 0 0 rgba(255,0,110,0.3), 3px 0 0 rgba(58,134,255,0.3); }
         }
         @keyframes glitch-text {
-            0%, 90%, 100% { text-shadow: none; transform: translate(0); }
-            91% { text-shadow: 2px 0 #ff006e, -2px 0 #3a86ff; transform: translate(-2px, 0); }
-            92% { text-shadow: -2px 0 #ff006e, 2px 0 #3a86ff; transform: translate(2px, 0); }
-            93% { text-shadow: none; transform: translate(0); }
+            0%, 92%, 100% { text-shadow: none; transform: translate(0); }
+            93% { text-shadow: 1px 0 rgba(255,0,110,0.7), -1px 0 rgba(58,134,255,0.7); transform: translate(-1px, 0); }
+            94% { text-shadow: -1px 0 rgba(255,0,110,0.7), 1px 0 rgba(58,134,255,0.7); transform: translate(1px, 0); }
+            95% { text-shadow: none; transform: translate(0); }
         }
         /* Scanline overlay */
         .gallery-container::before {
