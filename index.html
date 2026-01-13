@@ -1742,16 +1742,17 @@
                             }
                         `;
                     } else {
-                        // Query by tags (default behavior)
+                        // Query recent tokens - simplified for reliability
                         objktQuery = `
-                            query GetGlitchArt {
-                                token(where: {
-                                    _or: [
-                                        ${objktTags.slice(0, 15).map(tag => `{tags: {tag: {name: {_ilike: "%${tag}%"}}}}`).join(',\n')}
-                                    ],
-                                    mime: {_in: ["image/gif", "image/png", "image/jpeg", "video/mp4"]},
-                                    artifact_uri: {_is_null: false}
-                                }, limit: ${limit}, order_by: {timestamp: desc}) {
+                            query GetRecentArt {
+                                token(
+                                    where: {
+                                        artifact_uri: {_is_null: false},
+                                        display_uri: {_is_null: false}
+                                    },
+                                    limit: ${limit},
+                                    order_by: {timestamp: desc}
+                                ) {
                                     pk
                                     name
                                     mime
@@ -1759,16 +1760,21 @@
                                     display_uri
                                     thumbnail_uri
                                     supply
-                                    editions
-                                    tags { tag { name } }
-                                    creators { holder { address alias } }
-                                    fa_contract
                                     token_id
+                                    fa_contract
+                                    creators {
+                                        holder {
+                                            address
+                                            alias
+                                        }
+                                    }
                                     listings_active(limit: 1, order_by: {price: asc}) {
                                         price
-                                        currency { symbol decimals }
+                                        currency {
+                                            symbol
+                                            decimals
+                                        }
                                     }
-                                    listings_active_aggregate { aggregate { count } }
                                 }
                             }
                         `;
@@ -2131,7 +2137,8 @@
                                         const artist = token.creators?.[0]?.holder?.alias ||
                                                       token.creators?.[0]?.holder?.address?.slice(0, 8) + '...' ||
                                                       'Unknown';
-                                        const tags = token.tags?.map(t => t.tag?.name).filter(Boolean) || [];
+                                        // Tags not included in simplified query
+                                        const tags = [];
 
                                         // Parse pricing info
                                         const listing = token.listings_active?.[0];
@@ -2147,12 +2154,11 @@
                                             available = true;
                                         }
 
-                                        // Parse edition info
+                                        // Parse edition info (simplified)
                                         const totalSupply = token.supply || 1;
-                                        const editionsAvailable = token.editions || token.listings_active_aggregate?.aggregate?.count || 0;
-                                        const editionsSold = totalSupply - editionsAvailable;
                                         const isOneOfOne = totalSupply === 1;
-                                        let editionDisplay = isOneOfOne ? '1/1' : `${editionsAvailable}/${totalSupply} avail`;
+                                        const editionsAvailable = listing ? 1 : 0;
+                                        let editionDisplay = isOneOfOne ? '1/1' : `${totalSupply} editions`;
 
                                         // Build objkt.com URL
                                         const objktUrl = token.fa_contract && token.token_id
