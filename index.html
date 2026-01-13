@@ -2093,8 +2093,10 @@
                         });
                     }
 
-                    if (result.type === 'objkt' && result.data.data && result.data.data.token) {
-                        result.data.data.token.forEach(token => {
+                    if (result.type === 'objkt') {
+                        const tokens = result.data?.data?.token || [];
+                        console.log(`objkt returned ${tokens.length} tokens`);
+                        tokens.forEach(token => {
                             // Convert IPFS URIs to gateway URLs
                             let displayUrl = token.display_uri || token.thumbnail_uri || token.artifact_uri;
                             if (displayUrl && displayUrl.startsWith('ipfs://')) {
@@ -2464,7 +2466,16 @@
             }
 
             if (displayGifs.length === 0) {
-                track.innerHTML = '<div class="loading">No GIFs found</div>';
+                track.innerHTML = `
+                    <div class="loading" style="text-align:center;padding:40px;">
+                        <div style="font-size:1.5rem;margin-bottom:15px;">No content found</div>
+                        <div style="color:#888;font-size:0.9rem;">Try enabling more sources or changing filters</div>
+                        <button onclick="clearAllFilters();allSourcesOn();applyFilters();"
+                                style="margin-top:20px;padding:12px 24px;background:#8338ec;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:1rem;">
+                            Reset to All Art
+                        </button>
+                    </div>
+                `;
                 return;
             }
 
