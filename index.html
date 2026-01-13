@@ -251,6 +251,17 @@
             color: #fff;
             box-shadow: 0 0 25px rgba(131,56,236,0.4), inset 0 0 15px rgba(255,0,110,0.1);
         }
+        .music-btn.playing {
+            background: linear-gradient(135deg, rgba(58,134,255,0.2), rgba(131,56,236,0.3));
+            border-color: rgba(58,134,255,0.6);
+            color: #fff;
+            box-shadow: 0 0 25px rgba(58,134,255,0.4);
+            animation: music-pulse 2s ease-in-out infinite;
+        }
+        @keyframes music-pulse {
+            0%, 100% { box-shadow: 0 0 15px rgba(58,134,255,0.3); }
+            50% { box-shadow: 0 0 25px rgba(131,56,236,0.5), 0 0 35px rgba(58,134,255,0.3); }
+        }
         .saved-count {
             background: linear-gradient(135deg, #ff006e, #8338ec);
             padding: 3px 10px;
@@ -1126,8 +1137,14 @@
             <button class="filter-toggle" onclick="toggleSettings()">Settings</button>
             <button class="sfw-btn sfw-active" id="sfwBtn" onclick="toggleSfwMode()" title="Toggle Safe For Work / NSFW content">SFW</button>
             <button class="seizure-safe-btn" id="seizureSafeBtn" onclick="toggleSeizureSafe()" title="Reduces flashing, shows static images, filters strobe content">Seizure Safe</button>
+            <button class="nav-btn music-btn" id="musicBtn" onclick="toggleMusic()" title="Toggle lofi music">🎵 Lofi</button>
         </div>
     </header>
+
+    <!-- Lofi Music Player (hidden) -->
+    <audio id="lofiPlayer" loop preload="none">
+        <source src="https://streams.ilovemusic.de/iloveradio17.mp3" type="audio/mpeg">
+    </audio>
 
     <div class="filter-panel" id="filterPanel">
         <div class="filter-section">
@@ -3646,6 +3663,30 @@
                 btn.classList.remove('active');
                 btn.textContent = 'SEIZURE SAFE: OFF';
                 btn.style.background = '#333';
+            }
+        }
+
+        // Lofi Music Player
+        let musicPlaying = false;
+        function toggleMusic() {
+            const player = document.getElementById('lofiPlayer');
+            const btn = document.getElementById('musicBtn');
+
+            if (musicPlaying) {
+                player.pause();
+                btn.classList.remove('playing');
+                btn.textContent = '🎵 Lofi';
+                musicPlaying = false;
+            } else {
+                player.volume = 0.3; // Start at 30% volume
+                player.play().then(() => {
+                    btn.classList.add('playing');
+                    btn.textContent = '🎵 Playing';
+                    musicPlaying = true;
+                }).catch(err => {
+                    console.log('Music autoplay blocked - user interaction required');
+                    // Try again on next click
+                });
             }
         }
 
