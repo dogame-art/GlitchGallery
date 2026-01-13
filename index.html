@@ -121,6 +121,34 @@
             color: #00c864;
             box-shadow: 0 0 10px rgba(0, 200, 100, 0.3);
         }
+        /* SFW/NSFW Toggle */
+        .sfw-btn {
+            background: rgba(100, 150, 255, 0.1);
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            color: rgba(100, 150, 255, 0.9);
+            padding: 8px 14px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            border-radius: 20px;
+            margin-right: 15px;
+        }
+        .sfw-btn:hover {
+            background: rgba(100, 150, 255, 0.2);
+            border-color: rgba(100, 150, 255, 0.6);
+        }
+        .sfw-btn.sfw-active {
+            background: rgba(100, 150, 255, 0.3);
+            border-color: #6496ff;
+            color: #6496ff;
+        }
+        .sfw-btn.nsfw-active {
+            background: rgba(255, 100, 100, 0.3);
+            border-color: #ff6464;
+            color: #ff6464;
+        }
         body.seizure-safe-mode .art-media img,
         body.seizure-safe-mode .art-media video {
             filter: contrast(0.85) saturate(0.7);
@@ -1043,6 +1071,7 @@
 
     <header>
         <div style="display:flex;align-items:center;">
+            <button class="sfw-btn sfw-active" id="sfwBtn" onclick="toggleSfwMode()" title="Toggle Safe For Work / NSFW content">SFW</button>
             <button class="seizure-safe-btn" id="seizureSafeBtn" onclick="toggleSeizureSafe()" title="Reduces flashing, shows static images, filters strobe content">⚡ Seizure Safe</button>
             <h1 class="logo">GG <span class="logo-text">GLITCH GALLERY</span></h1>
         </div>
@@ -1059,6 +1088,7 @@
             <h4>SOURCES
                 <button class="preset-btn" style="margin-left:15px;" onclick="allSourcesOn()">All On</button>
                 <button class="preset-btn" onclick="allSourcesOff()">All Off</button>
+                <button class="preset-btn" style="background:#8338ec;" onclick="objktOnly()">OBJKT Only</button>
             </h4>
             <div class="filter-tags" id="sourceToggles"></div>
         </div>
@@ -1236,6 +1266,10 @@
         let seizureSafeMode = localStorage.getItem('seizureSafeMode') === 'true' || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const FLASH_TAGS = ['strobe', 'flashing', 'flash', 'epilepsy', 'seizure', 'warning', 'photosensitive', 'blink', 'rapid', 'strobe light'];
 
+        // SFW/NSFW Mode (SFW by default)
+        let sfwMode = localStorage.getItem('sfwMode') !== 'false'; // Default true (SFW)
+        const NSFW_TAGS = ['nsfw', 'nude', 'nudity', 'porn', 'xxx', 'adult', 'explicit', 'sexy', 'erotic', 'hentai', 'rule34', 'lewd', 'naked', 'sex', 'boobs', 'ass', 'dick', 'pussy', 'fetish', 'kink', 'bondage', 'bdsm'];
+
         // Deduplication tracking
         const seenUrls = new Set(); // Track URLs to prevent duplicate images
         const artistCountMap = new Map(); // Track how many items per artist
@@ -1385,8 +1419,9 @@
                     let terms = effectiveSearchTerms.length === 0
                         ? ['trending', 'reaction', 'funny', 'cool', 'amazing', 'beautiful', 'wow', 'nature', 'animals', 'space', 'colorful', 'satisfying']
                         : effectiveSearchTerms;
+                    const giphyRating = sfwMode ? 'pg-13' : 'r'; // SFW = pg-13, NSFW = r
                     const giphyPromises = terms.map(term =>
-                        fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(term)}&limit=${limit}&rating=r`)
+                        fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(term)}&limit=${limit}&rating=${giphyRating}`)
                             .then(r => r.json())
                             .then(data => ({ type: 'giphy', data }))
                             .catch(() => ({ type: 'giphy', data: { data: [] } }))
@@ -2173,11 +2208,18 @@
             const container = document.getElementById('galleryContainer');
             const track = document.getElementById('scrollTrack');
 
-            // Filter out flash content if seizure safe mode is on
+            // Filter content based on modes
             let displayGifs = allGifs;
+            // Filter flash content if seizure safe mode is on
             if (seizureSafeMode) {
-                displayGifs = allGifs.filter(gif =>
+                displayGifs = displayGifs.filter(gif =>
                     !hasFlashTags(gif.tags) && !hasFlashTitle(gif.title)
+                );
+            }
+            // Filter NSFW content if SFW mode is on
+            if (sfwMode) {
+                displayGifs = displayGifs.filter(gif =>
+                    !hasNsfwTags(gif.tags) && !hasNsfwTitle(gif.title)
                 );
             }
 
@@ -2961,6 +3003,46 @@
             return FLASH_TAGS.some(flashTag => lowerTitle.includes(flashTag));
         }
 
+        // SFW/NSFW Mode - filters adult content
+        function toggleSfwMode() {
+            sfwMode = !sfwMode;
+            localStorage.setItem('sfwMode', sfwMode);
+            applySfwMode();
+            // Need to reload since API parameters change
+            applyFilters();
+        }
+
+        function applySfwMode() {
+            const btn = document.getElementById('sfwBtn');
+            if (sfwMode) {
+                btn.classList.add('sfw-active');
+                btn.classList.remove('nsfw-active');
+                btn.textContent = 'SFW';
+                btn.title = 'Safe For Work mode (click for NSFW)';
+            } else {
+                btn.classList.remove('sfw-active');
+                btn.classList.add('nsfw-active');
+                btn.textContent = 'NSFW';
+                btn.title = 'NSFW mode enabled (click for SFW)';
+            }
+        }
+
+        // Check if content has NSFW tags
+        function hasNsfwTags(tags) {
+            if (!tags || !Array.isArray(tags)) return false;
+            const lowerTags = tags.map(t => (t || '').toString().toLowerCase());
+            return NSFW_TAGS.some(nsfwTag =>
+                lowerTags.some(tag => tag.includes(nsfwTag))
+            );
+        }
+
+        // Check title for NSFW words
+        function hasNsfwTitle(title) {
+            if (!title) return false;
+            const lowerTitle = title.toLowerCase();
+            return NSFW_TAGS.some(nsfwTag => lowerTitle.includes(nsfwTag));
+        }
+
         async function toggleDopamineMode() {
             dopamineMode = !dopamineMode;
             const btn = document.getElementById('dopamineBtn');
@@ -3041,7 +3123,7 @@
                 for (let i = 0; i < 2; i++) {
                     const term = randomTerms[Math.floor(Math.random() * randomTerms.length)];
                     quickFetches.push(
-                        fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${term}&limit=40&offset=${Math.floor(Math.random() * 200)}&rating=r`)
+                        fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${term}&limit=40&offset=${Math.floor(Math.random() * 200)}&rating=${sfwMode ? 'pg-13' : 'r'}`)
                             .then(r => r.json())
                             .catch(() => ({ data: [] }))
                     );
@@ -3230,7 +3312,7 @@
                 for (let i = 0; i < 3; i++) {
                     const term = randomTerms[Math.floor(Math.random() * randomTerms.length)];
                     quickFetches.push(
-                        fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${term}&limit=50&offset=${Math.floor(Math.random() * 200)}&rating=r`)
+                        fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${term}&limit=50&offset=${Math.floor(Math.random() * 200)}&rating=${sfwMode ? 'pg-13' : 'r'}`)
                             .then(r => r.json())
                             .catch(() => ({ data: [] }))
                     );
@@ -3328,6 +3410,15 @@
             renderSourceToggles();
             renderSourceControls();
             // Don't auto-reload - let user select sources first
+        }
+
+        function objktOnly() {
+            // Turn off all sources except objkt
+            Object.keys(sourcesEnabled).forEach(s => sourcesEnabled[s] = false);
+            sourcesEnabled.objkt = true;
+            renderSourceToggles();
+            renderSourceControls();
+            scheduleReload(500);
         }
 
         function toggleRedditSub(sub) {
@@ -3433,6 +3524,7 @@
         // Init
         updateSavedCount();
         applySeizureSafeMode(); // Apply seizure safe mode on load (checks localStorage and prefers-reduced-motion)
+        applySfwMode(); // Apply SFW mode on load (SFW by default)
         setupScroll();
         renderSourceToggles();
         renderSourceControls();
