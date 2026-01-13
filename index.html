@@ -1215,7 +1215,7 @@
     </header>
 
     <!-- Lofi Music Player (hidden) -->
-    <audio id="lofiPlayer" loop preload="none">
+    <audio id="lofiPlayer" preload="none">
         <source src="https://streams.ilovemusic.de/iloveradio17.mp3" type="audio/mpeg">
     </audio>
 
@@ -3755,15 +3755,25 @@
             } else {
                 const volume = document.getElementById('musicVolume').value / 100;
                 player.volume = volume;
+                btn.textContent = '⏳ Loading...';
                 player.play().then(() => {
                     container.classList.add('playing');
                     btn.textContent = '▶️ Playing';
                     musicPlaying = true;
                 }).catch(err => {
-                    console.log('Music autoplay blocked - user interaction required');
+                    console.log('Music play error:', err);
+                    btn.textContent = '🎵 Lofi';
                 });
             }
         }
+
+        // Handle stream errors
+        document.getElementById('lofiPlayer').addEventListener('error', function(e) {
+            console.log('Stream error:', e);
+            const btn = document.getElementById('musicBtn');
+            btn.textContent = '❌ Error';
+            setTimeout(() => { btn.textContent = '🎵 Lofi'; }, 2000);
+        });
 
         function stopMusic() {
             const player = document.getElementById('lofiPlayer');
@@ -3771,7 +3781,8 @@
             const container = document.getElementById('musicPlayer');
 
             player.pause();
-            player.currentTime = 0;
+            // For live streams, reload the source to fully stop
+            player.load();
             container.classList.remove('playing');
             btn.textContent = '🎵 Lofi';
             musicPlaying = false;
