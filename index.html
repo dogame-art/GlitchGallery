@@ -3057,14 +3057,53 @@
             if (e.key === 'Escape') {
                 closeFullscreen();
                 closeModal();
-                document.getElementById('filterPanel').classList.remove('active');
+                closePanels();
             }
         });
 
+        // Click outside to close panels
+        document.addEventListener('click', e => {
+            const filterPanel = document.getElementById('filterPanel');
+            const settingsPanel = document.getElementById('settingsPanel');
+            const filterBtns = document.querySelectorAll('.filter-toggle');
+
+            // Check if click is outside filter panel
+            if (filterPanel.classList.contains('active')) {
+                if (!filterPanel.contains(e.target) && !filterBtns[0].contains(e.target)) {
+                    filterPanel.classList.remove('active');
+                    filterBtns[0].classList.remove('active');
+                }
+            }
+
+            // Check if click is outside settings panel
+            if (settingsPanel.classList.contains('active')) {
+                if (!settingsPanel.contains(e.target) && !filterBtns[1].contains(e.target)) {
+                    settingsPanel.classList.remove('active');
+                    filterBtns[1].classList.remove('active');
+                }
+            }
+        });
+
+        // Helper to close all panels and clear button states
+        function closePanels() {
+            document.getElementById('filterPanel').classList.remove('active');
+            document.getElementById('settingsPanel').classList.remove('active');
+            document.querySelectorAll('.filter-toggle').forEach(btn => btn.classList.remove('active'));
+        }
+
         // Filter system
         function toggleFilters() {
-            document.getElementById('filterPanel').classList.toggle('active');
+            const filterPanel = document.getElementById('filterPanel');
+            const isOpening = !filterPanel.classList.contains('active');
+
+            filterPanel.classList.toggle('active');
             document.getElementById('settingsPanel').classList.remove('active');
+
+            // Update button states
+            const filterBtns = document.querySelectorAll('.filter-toggle');
+            filterBtns[0].classList.toggle('active', isOpening); // Filters button
+            filterBtns[1].classList.remove('active'); // Settings button
+
             renderFilterTags();
         }
 
@@ -3206,6 +3245,9 @@
             const panel = document.getElementById('filterPanel');
             if (panel && panel.classList.contains('active')) {
                 panel.classList.remove('active');
+                // Also clear button state
+                const filterBtns = document.querySelectorAll('.filter-toggle');
+                if (filterBtns[0]) filterBtns[0].classList.remove('active');
             }
         }
 
@@ -3426,8 +3468,16 @@
         }
 
         function toggleSettings() {
-            document.getElementById('settingsPanel').classList.toggle('active');
+            const settingsPanel = document.getElementById('settingsPanel');
+            const isOpening = !settingsPanel.classList.contains('active');
+
+            settingsPanel.classList.toggle('active');
             document.getElementById('filterPanel').classList.remove('active');
+
+            // Update button states
+            const filterBtns = document.querySelectorAll('.filter-toggle');
+            filterBtns[0].classList.remove('active'); // Filters button
+            filterBtns[1].classList.toggle('active', isOpening); // Settings button
         }
 
         function updateScrollSpeed(value) {
