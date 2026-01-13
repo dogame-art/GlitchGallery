@@ -3165,7 +3165,7 @@
                 countSpan.textContent = '';
             } else {
                 activeContainer.innerHTML = searchTerms.map(term => `
-                    <span class="filter-tag active" onclick="toggleFilter('${term.replace(/'/g, "\\'")}')" style="cursor:pointer;">
+                    <span class="filter-tag active" onclick="event.stopPropagation(); toggleFilter('${term.replace(/'/g, "\\'")}')" style="cursor:pointer;">
                         ${term} <span style="margin-left:5px;color:#ff6464;">&times;</span>
                     </span>
                 `).join('');
@@ -3179,7 +3179,7 @@
                 const activeInCategory = category.terms.filter(t => searchTerms.includes(t)).length;
                 return `
                     <div class="filter-category" style="margin-bottom:8px;">
-                        <div onclick="toggleCategoryExpand('${key}')" style="cursor:pointer;padding:8px 12px;background:rgba(255,255,255,0.05);border-radius:6px;display:flex;justify-content:space-between;align-items:center;border-left:3px solid ${category.color};">
+                        <div onclick="event.stopPropagation(); toggleCategoryExpand('${key}')" style="cursor:pointer;padding:8px 12px;background:rgba(255,255,255,0.05);border-radius:6px;display:flex;justify-content:space-between;align-items:center;border-left:3px solid ${category.color};">
                             <span style="font-weight:bold;color:${category.color};">${category.name}</span>
                             <span style="display:flex;align-items:center;gap:10px;">
                                 ${activeInCategory > 0 ? `<span style="background:${category.color};color:#fff;padding:2px 8px;border-radius:10px;font-size:0.7rem;">${activeInCategory}</span>` : ''}
@@ -3438,7 +3438,7 @@
                 if (isComingSoon) {
                     return `<span class="filter-tag coming-soon" title="Coming Soon - API integration in progress">${sourceNames[source]} <small>(Soon)</small></span>`;
                 }
-                return `<span class="filter-tag ${sourcesEnabled[source] ? 'active' : ''}" onclick="toggleSource('${source}')">${sourceNames[source]}</span>`;
+                return `<span class="filter-tag ${sourcesEnabled[source] ? 'active' : ''}" onclick="event.stopPropagation(); toggleSource('${source}')">${sourceNames[source]}</span>`;
             }).join('');
 
             // Easter egg step 3: Show secret source when secret sub is found
@@ -4079,7 +4079,7 @@
             const container = document.getElementById('redditTags');
             container.innerHTML = allRedditSubs.map(sub => `
                 <span class="filter-tag ${redditSubs.includes(sub) ? 'active' : ''}"
-                      onclick="toggleRedditSub('${sub}')">r/${sub}</span>
+                      onclick="event.stopPropagation(); toggleRedditSub('${sub}')">r/${sub}</span>
             `).join('');
 
             // Easter egg step 2: Show secret subreddit when egg is found
@@ -4128,7 +4128,7 @@
             if (!container) return;
             container.innerHTML = allArtists.map(artist => `
                 <span class="filter-tag ${selectedArtists.includes(artist) ? 'active' : ''}"
-                      onclick="toggleArtist('${artist.replace(/'/g, "\\'")}')">${artist}</span>
+                      onclick="event.stopPropagation(); toggleArtist('${artist.replace(/'/g, "\\'")}')">${artist}</span>
             `).join('');
         }
 
