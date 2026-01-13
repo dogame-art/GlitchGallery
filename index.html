@@ -859,6 +859,68 @@
             98.5% { opacity: 0.98; }
         }
         body { animation: screen-flicker 8s infinite; }
+
+        /* Matrix Rain Easter Egg Effect */
+        .matrix-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 99999;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.9);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .matrix-container.active {
+            opacity: 1;
+        }
+        .matrix-container.fade-out {
+            opacity: 0;
+        }
+        .matrix-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        .matrix-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-family: 'Courier New', monospace;
+            color: #00ff00;
+            text-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00;
+            text-align: center;
+            opacity: 0;
+            animation: matrix-reveal 1s ease forwards 2s;
+        }
+        @keyframes matrix-reveal {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        /* Easter egg filter styling - subtle */
+        .easter-egg-filter {
+            opacity: 0.3;
+            font-size: 0.6rem !important;
+            transition: all 0.3s ease;
+        }
+        .easter-egg-filter:hover {
+            opacity: 1;
+            color: #00ff00 !important;
+            border-color: #00ff00 !important;
+            text-shadow: 0 0 5px #00ff00;
+        }
+        .secret-reveal {
+            animation: secret-glow 0.5s ease;
+        }
+        @keyframes secret-glow {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
         /* Filter toggle active state */
         .filter-toggle.active {
             background: linear-gradient(135deg, rgba(255,0,110,0.15), rgba(131,56,236,0.25));
@@ -1033,6 +1095,12 @@
             <div class="loading-progress-bar"></div>
         </div>
         <div class="loading-status" id="loadingStatus">INITIALIZING FEEDS...</div>
+    </div>
+
+    <!-- Matrix Easter Egg Container -->
+    <div class="matrix-container" id="matrixContainer">
+        <canvas class="matrix-canvas" id="matrixCanvas"></canvas>
+        <div class="matrix-message" id="matrixMessage">YOU FOUND THE SECRET<br><span style="font-size:1.5rem;">🥚 Easter Egg Hunter 🥚</span></div>
     </div>
 
     <header>
@@ -1212,6 +1280,13 @@
         let autoSpeed = -2;
         let cardSize = 300; // default card width
         let dopamineMode = false;
+
+        // Easter egg hunt state
+        let easterEggState = {
+            eggFound: false,      // Step 1: Easter Egg filter clicked
+            secretSubFound: false, // Step 2: notasecret subreddit clicked
+            shhhFound: false       // Step 3: shhhh source clicked
+        };
         let rowScrollPos = []; // for dopamine mode horizontal rows
         let dopamineRefreshInterval = null; // auto-refresh timer for dopamine mode
 
@@ -3030,6 +3105,13 @@
                 `;
             }).join('');
 
+            // Easter egg filter - subtle, at the very end
+            categoriesContainer.innerHTML += `
+                <div style="margin-top:20px;text-align:right;">
+                    <span class="filter-tag easter-egg-filter" onclick="clickEasterEgg()" title="...">easter egg</span>
+                </div>
+            `;
+
             // Update filter count (old location for backward compat)
             const filterCount = document.getElementById('filterCount');
             if (filterCount) {
@@ -3260,6 +3342,16 @@
                 }
                 return `<span class="filter-tag ${sourcesEnabled[source] ? 'active' : ''}" onclick="toggleSource('${source}')">${sourceNames[source]}</span>`;
             }).join('');
+
+            // Easter egg step 3: Show secret source when secret sub is found
+            if (easterEggState.secretSubFound) {
+                container.innerHTML += `
+                    <span class="filter-tag secret-reveal" onclick="clickSecretSource()"
+                          style="background:rgba(0,255,0,0.1);border-color:#00ff00;color:#00ff00;margin-left:10px;">
+                        🤫 shhhh
+                    </span>
+                `;
+            }
         }
 
         function renderSourceControls() {
@@ -3880,6 +3972,16 @@
                 <span class="filter-tag ${redditSubs.includes(sub) ? 'active' : ''}"
                       onclick="toggleRedditSub('${sub}')">r/${sub}</span>
             `).join('');
+
+            // Easter egg step 2: Show secret subreddit when egg is found
+            if (easterEggState.eggFound) {
+                container.innerHTML += `
+                    <span class="filter-tag secret-reveal" onclick="clickSecretSub()"
+                          style="background:rgba(0,255,0,0.1);border-color:#00ff00;color:#00ff00;margin-left:10px;">
+                        r/notasecret
+                    </span>
+                `;
+            }
         }
 
         function allSubredditsOn() {
@@ -4042,6 +4144,15 @@
         }
 
         function applyFilters() {
+            // Check for easter egg completion before applying
+            if (checkEasterEggComplete()) {
+                triggerMatrixEffect();
+                // Still close the panel
+                document.getElementById('filterPanel').classList.remove('active');
+                hidePendingChangesIndicator();
+                return; // Don't actually apply filters, just show the effect
+            }
+
             document.getElementById('filterPanel').classList.remove('active');
             hidePendingChangesIndicator();
             allGifs = [];
@@ -4061,6 +4172,112 @@
                     }, 30000);
                 }
             });
+        }
+
+        // === EASTER EGG HUNT ===
+        function clickEasterEgg() {
+            if (!easterEggState.eggFound) {
+                easterEggState.eggFound = true;
+                // Reveal the secret subreddit
+                renderRedditTags();
+                // Little feedback
+                const btn = event.target;
+                btn.style.color = '#00ff00';
+                btn.style.borderColor = '#00ff00';
+                btn.style.opacity = '1';
+                btn.textContent = '🥚 Found!';
+            }
+        }
+
+        function clickSecretSub() {
+            if (easterEggState.eggFound && !easterEggState.secretSubFound) {
+                easterEggState.secretSubFound = true;
+                // Reveal the secret source
+                renderSourceToggles();
+                // Feedback
+                const btn = event.target;
+                btn.style.animation = 'secret-glow 0.5s ease';
+            }
+        }
+
+        function clickSecretSource() {
+            if (easterEggState.secretSubFound && !easterEggState.shhhFound) {
+                easterEggState.shhhFound = true;
+                // All pieces found!
+                const btn = event.target;
+                btn.style.animation = 'secret-glow 0.5s ease';
+                btn.textContent = '🤫 Ready...';
+            }
+        }
+
+        function checkEasterEggComplete() {
+            return easterEggState.eggFound && easterEggState.secretSubFound && easterEggState.shhhFound;
+        }
+
+        function triggerMatrixEffect() {
+            const container = document.getElementById('matrixContainer');
+            const canvas = document.getElementById('matrixCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // Set canvas size
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            // Matrix rain characters
+            const chars = 'GLITCHGALLERY01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+            const fontSize = 16;
+            const columns = canvas.width / fontSize;
+            const drops = [];
+
+            for (let i = 0; i < columns; i++) {
+                drops[i] = Math.random() * -100;
+            }
+
+            // Show container
+            container.classList.add('active');
+
+            // Animation
+            let frameCount = 0;
+            const maxFrames = 300; // ~5 seconds at 60fps
+
+            function drawMatrix() {
+                // Semi-transparent black to create trail effect
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Green text
+                ctx.fillStyle = '#00ff00';
+                ctx.font = fontSize + 'px monospace';
+
+                for (let i = 0; i < drops.length; i++) {
+                    const char = chars[Math.floor(Math.random() * chars.length)];
+                    ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+
+                    // Reset drop to top with random delay
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+
+                frameCount++;
+                if (frameCount < maxFrames) {
+                    requestAnimationFrame(drawMatrix);
+                } else {
+                    // Fade out and cleanup
+                    container.classList.add('fade-out');
+                    setTimeout(() => {
+                        container.classList.remove('active', 'fade-out');
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        // Reset easter egg state for replay
+                        easterEggState = { eggFound: false, secretSubFound: false, shhhFound: false };
+                        renderSourceToggles();
+                        renderRedditTags();
+                    }, 500);
+                }
+            }
+
+            drawMatrix();
         }
 
         // Welcome popup for first-time visitors
