@@ -1,0 +1,3184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GG - Glitch Gallery</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(10,10,10,0.95);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #222;
+        }
+        h1 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        h1.logo {
+            font-size: 2.2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ff006e 0%, #8338ec 50%, #3a86ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: glitch-text 3s infinite, logo-flicker 5s infinite;
+            position: relative;
+            letter-spacing: -3px;
+            padding: 5px 12px;
+            border: 2px solid transparent;
+            background-clip: padding-box, border-box;
+            background-origin: padding-box, border-box;
+            background-image: linear-gradient(#0a0a0a, #0a0a0a), linear-gradient(135deg, #ff006e, #8338ec, #3a86ff);
+            -webkit-background-clip: text, border-box;
+        }
+        h1.logo::before {
+            content: 'GG';
+            position: absolute;
+            left: 12px;
+            top: 5px;
+            color: #ff006e;
+            opacity: 0;
+            animation: logo-ghost 4s infinite;
+            -webkit-text-fill-color: #ff006e;
+        }
+        h1.logo::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 4px;
+            padding: 2px;
+            background: linear-gradient(135deg, #ff006e, #8338ec, #3a86ff);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.6;
+        }
+        .logo-text {
+            font-size: 0.75rem;
+            font-weight: 400;
+            letter-spacing: 4px;
+            opacity: 0.6;
+            text-transform: uppercase;
+        }
+        @keyframes logo-flicker {
+            0%, 95%, 100% { filter: none; }
+            96% { filter: brightness(1.5) hue-rotate(10deg); }
+            97% { filter: brightness(0.8); }
+            98% { filter: brightness(1.2) hue-rotate(-10deg); }
+        }
+        @keyframes logo-ghost {
+            0%, 90%, 100% { opacity: 0; transform: translateX(0); }
+            92% { opacity: 0.5; transform: translateX(-3px); }
+            94% { opacity: 0; transform: translateX(3px); }
+            96% { opacity: 0.3; transform: translateX(-2px); }
+        }
+        /* Brand colors */
+        :root {
+            --gg-pink: #ff006e;
+            --gg-purple: #8338ec;
+            --gg-blue: #3a86ff;
+            --gg-dark: #0a0a0a;
+            --gg-gray: #222;
+        }
+        /* Easter egg: Full site glitch effect */
+        .site-glitch {
+            animation: site-glitch-effect 0.5s ease-out;
+        }
+        @keyframes site-glitch-effect {
+            0% { filter: none; transform: translate(0); }
+            10% { filter: hue-rotate(90deg) saturate(2); transform: translate(-5px, 2px) skewX(2deg); }
+            20% { filter: invert(1) hue-rotate(180deg); transform: translate(5px, -2px) skewX(-2deg); }
+            30% { filter: hue-rotate(-90deg) contrast(2); transform: translate(-3px, 1px) skewX(1deg); }
+            40% { filter: saturate(3) brightness(1.5); transform: translate(3px, -1px) skewX(-1deg); }
+            50% { filter: hue-rotate(45deg) blur(2px); transform: translate(-2px, 2px); }
+            60% { filter: invert(0.5) saturate(2); transform: translate(2px, -2px) skewX(1deg); }
+            70% { filter: hue-rotate(-45deg) contrast(1.5); transform: translate(-1px, 1px); }
+            80% { filter: saturate(1.5) brightness(1.2); transform: translate(1px, -1px); }
+            90% { filter: hue-rotate(20deg); transform: translate(0); }
+            100% { filter: none; transform: translate(0); }
+        }
+        /* Glitch overlay flash */
+        .glitch-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 10000;
+            opacity: 0;
+        }
+        .glitch-overlay.active {
+            animation: glitch-flash 0.5s ease-out;
+        }
+        @keyframes glitch-flash {
+            0% { opacity: 0; background: transparent; }
+            10% { opacity: 0.3; background: linear-gradient(90deg, #ff006e 0%, transparent 20%, #3a86ff 40%, transparent 60%, #8338ec 80%, transparent 100%); }
+            20% { opacity: 0; }
+            30% { opacity: 0.4; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(255,0,110,0.3) 2px, rgba(255,0,110,0.3) 4px); }
+            40% { opacity: 0; }
+            50% { opacity: 0.2; background: #3a86ff; mix-blend-mode: overlay; }
+            60% { opacity: 0; }
+            70% { opacity: 0.1; background: linear-gradient(45deg, #ff006e, transparent, #8338ec); }
+            100% { opacity: 0; }
+        }
+        /* RGB split on glitch */
+        .rgb-split {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: screen;
+            opacity: 0;
+        }
+        .rgb-split.active {
+            animation: rgb-flash 0.3s ease-out;
+        }
+        @keyframes rgb-flash {
+            0%, 100% { opacity: 0; }
+            20% { opacity: 1; box-shadow: -5px 0 0 rgba(255,0,110,0.5), 5px 0 0 rgba(58,134,255,0.5); }
+            40% { opacity: 1; box-shadow: 5px 0 0 rgba(255,0,110,0.5), -5px 0 0 rgba(58,134,255,0.5); }
+            60% { opacity: 0.5; box-shadow: -3px 0 0 rgba(255,0,110,0.3), 3px 0 0 rgba(58,134,255,0.3); }
+        }
+        @keyframes glitch-text {
+            0%, 90%, 100% { text-shadow: none; transform: translate(0); }
+            91% { text-shadow: 2px 0 #ff006e, -2px 0 #3a86ff; transform: translate(-2px, 0); }
+            92% { text-shadow: -2px 0 #ff006e, 2px 0 #3a86ff; transform: translate(2px, 0); }
+            93% { text-shadow: none; transform: translate(0); }
+        }
+        /* Scanline overlay */
+        .gallery-container::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0,0,0,0.03) 0px,
+                rgba(0,0,0,0.03) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 100;
+        }
+        .nav-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+        .nav-btn {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.8);
+            padding: 10px 24px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+        .nav-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,0,110,0.1), rgba(131,56,236,0.1), rgba(58,134,255,0.1));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .nav-btn:hover::before {
+            opacity: 1;
+        }
+        .nav-btn:hover {
+            border-color: rgba(131,56,236,0.5);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(131,56,236,0.3), inset 0 0 20px rgba(131,56,236,0.1);
+            transform: translateY(-2px);
+        }
+        .nav-btn.active {
+            background: linear-gradient(135deg, rgba(255,0,110,0.2), rgba(131,56,236,0.3));
+            border-color: rgba(131,56,236,0.6);
+            color: #fff;
+            box-shadow: 0 0 25px rgba(131,56,236,0.4), inset 0 0 15px rgba(255,0,110,0.1);
+        }
+        .saved-count {
+            background: linear-gradient(135deg, #ff006e, #8338ec);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            box-shadow: 0 0 10px rgba(255,0,110,0.5);
+            margin-left: 5px;
+        }
+        .gallery-container {
+            padding-top: 70px;
+            min-height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+        .scroll-track {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            width: max-content;
+            /* GPU acceleration for smooth scrolling */
+            will-change: transform;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+        .art-card {
+            flex-shrink: 0;
+            width: 300px;
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+            /* Performance optimizations */
+            content-visibility: auto;
+            contain-intrinsic-size: 300px 350px;
+            will-change: transform;
+        }
+        .art-card:hover {
+            border-color: #8338ec;
+            transform: scale(1.03);
+            animation: card-glitch 0.3s ease;
+        }
+        @keyframes card-glitch {
+            0%, 100% { filter: none; }
+            25% { filter: hue-rotate(90deg); }
+            50% { filter: saturate(2) contrast(1.2); }
+            75% { filter: hue-rotate(-90deg); }
+        }
+        .art-card:hover .art-media img {
+            animation: rgb-split 0.5s ease;
+        }
+        @keyframes rgb-split {
+            0%, 100% { filter: none; }
+            20% { filter: drop-shadow(2px 0 0 rgba(255,0,110,0.5)) drop-shadow(-2px 0 0 rgba(58,134,255,0.5)); }
+            40% { filter: drop-shadow(-1px 0 0 rgba(255,0,110,0.5)) drop-shadow(1px 0 0 rgba(58,134,255,0.5)); }
+            60% { filter: none; }
+        }
+        /* Dopamine Rush mode styles - alternating rows */
+        .gallery-container.dopamine-mode {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 65px 0 10px 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .gallery-container.dopamine-mode .scroll-track {
+            display: flex !important;
+            flex-direction: column;
+            gap: 6px;
+            width: 100% !important;
+        }
+        .dopamine-row {
+            display: flex;
+            gap: 6px;
+            width: max-content;
+            will-change: transform;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+        .dopamine-row .art-card {
+            flex-shrink: 0;
+            width: 200px !important;
+        }
+        .dopamine-row .art-media {
+            height: 150px !important;
+        }
+        .dopamine-row .art-info {
+            padding: 5px;
+            font-size: 0.6rem;
+        }
+        /* Mobile responsive styles */
+        @media (max-width: 768px) {
+            header {
+                padding: 10px 15px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            h1 { font-size: 1.2rem; }
+            .nav-btns {
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            .nav-btn, .filter-toggle {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+            .filter-panel {
+                top: auto;
+                max-height: 70vh;
+                padding: 15px;
+            }
+            .filter-tag, .preset-btn {
+                padding: 8px 12px;
+                font-size: 0.75rem;
+            }
+            .art-card { width: 250px; }
+            .art-media { height: 250px; }
+            .gallery-container { padding-top: 100px; }
+            .dopamine-row .art-card { width: 150px !important; }
+            .dopamine-row .art-media { height: 120px !important; }
+            .fullscreen-modal img {
+                max-width: 95vw;
+                max-height: 60vh;
+            }
+            .source-control {
+                padding: 8px;
+            }
+            .custom-filter-input {
+                width: 150px;
+            }
+        }
+        @media (max-width: 480px) {
+            h1 { font-size: 1rem; }
+            .art-card { width: 200px; }
+            .art-media { height: 200px; }
+            .dopamine-row .art-card { width: 120px !important; }
+            .dopamine-row .art-media { height: 100px !important; }
+            .filter-section h4 { font-size: 0.75rem; }
+        }
+        .art-media {
+            width: 100%;
+            height: 300px;
+            background: #000;
+            overflow: hidden;
+        }
+        .art-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* Smooth image rendering */
+            image-rendering: auto;
+            transform: translateZ(0);
+        }
+        /* NFT Price badge */
+        .price-badge {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            backdrop-filter: blur(8px);
+            z-index: 5;
+        }
+        .price-badge.available {
+            background: linear-gradient(135deg, rgba(0,200,100,0.8), rgba(0,150,80,0.9));
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(0,200,100,0.3);
+        }
+        .price-badge.sold-out {
+            background: rgba(100,100,100,0.8);
+            color: #aaa;
+        }
+        .bookmark-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.6);
+            border: none;
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+            z-index: 10;
+        }
+        .bookmark-btn:hover, .bookmark-btn.saved { background: #ff006e; }
+        .art-info {
+            padding: 10px;
+            font-size: 0.75rem;
+            color: #888;
+        }
+        .saved-section {
+            display: none;
+            padding: 90px 20px 20px;
+        }
+        .saved-section.active { display: block; }
+        .gallery-container.hidden { display: none; }
+        .saved-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .saved-card {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .saved-card .art-media { height: 200px; }
+        .tag-input {
+            width: 100%;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            margin-top: 8px;
+        }
+        .remove-btn {
+            background: #ff006e;
+            border: none;
+            color: #fff;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            margin-top: 8px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #111;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+        }
+        .modal-content h3 { margin-bottom: 15px; }
+        .modal-input {
+            width: 100%;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+        .modal-btn { padding: 8px 16px; border: none; cursor: pointer; }
+        .modal-btn.save { background: #8338ec; color: #fff; }
+        .modal-btn.cancel { background: #333; color: #fff; }
+        .fullscreen-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 3000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        .fullscreen-modal.active { display: flex; }
+        .fullscreen-modal img {
+            max-width: 90vw;
+            max-height: 75vh;
+            object-fit: contain;
+        }
+        .fullscreen-info {
+            margin-top: 20px;
+            text-align: center;
+            max-width: 80vw;
+        }
+        .fullscreen-title {
+            color: #fff;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .fullscreen-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+        }
+        .fullscreen-tag {
+            background: #222;
+            border: 1px solid #444;
+            color: #aaa;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .fullscreen-tag:hover {
+            background: #8338ec;
+            border-color: #8338ec;
+            color: #fff;
+        }
+        .fullscreen-artist {
+            color: #888;
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+        }
+        .fullscreen-save-btn {
+            margin-top: 15px;
+            background: #8338ec;
+            border: none;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .fullscreen-save-btn:hover {
+            transform: scale(1.05);
+        }
+        .fullscreen-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        .fullscreen-price {
+            background: linear-gradient(135deg, rgba(0,200,100,0.2), rgba(0,150,80,0.3));
+            border: 1px solid rgba(0,200,100,0.5);
+            color: #00c864;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+        .fullscreen-price.sold-out {
+            background: rgba(100,100,100,0.2);
+            border-color: rgba(100,100,100,0.5);
+            color: #888;
+        }
+        .fullscreen-external-btn {
+            background: linear-gradient(135deg, #3a86ff, #8338ec);
+            border: none;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+        .fullscreen-external-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(58,134,255,0.4);
+        }
+        /* Epic Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #0a0a0a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        .loading-screen::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0,0,0,0) 0px,
+                rgba(0,0,0,0) 1px,
+                rgba(0,255,255,0.03) 1px,
+                rgba(0,255,255,0.03) 2px
+            );
+            pointer-events: none;
+            animation: scanline-move 8s linear infinite;
+        }
+        @keyframes scanline-move {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100px); }
+        }
+        .loading-text {
+            font-size: 8rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -8px;
+            position: relative;
+            background: linear-gradient(135deg, #ff006e 0%, #8338ec 50%, #3a86ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: main-glitch 3s infinite;
+            text-shadow: 0 0 80px rgba(131, 56, 236, 0.5);
+        }
+        .loading-text::before,
+        .loading-text::after {
+            content: 'GG';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-text-fill-color: initial;
+        }
+        .loading-text::before {
+            color: #ff006e;
+            animation: glitch-1 2s infinite;
+            clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+            text-shadow: -4px 0 #ff006e;
+        }
+        .loading-text::after {
+            color: #3a86ff;
+            animation: glitch-2 2s infinite;
+            clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+            text-shadow: 4px 0 #3a86ff;
+        }
+        @keyframes main-glitch {
+            0%, 90%, 100% { transform: translate(0); }
+            91% { transform: translate(-5px, 2px); }
+            92% { transform: translate(5px, -2px); }
+            93% { transform: translate(-3px, 1px); }
+            94% { transform: translate(3px, -1px); }
+        }
+        @keyframes glitch-1 {
+            0%, 85%, 100% { transform: translate(0); opacity: 0.8; }
+            86% { transform: translate(10px, 0); }
+            87% { transform: translate(-10px, 0); }
+            88% { transform: translate(5px, 0); }
+            89% { transform: translate(-5px, 0); opacity: 0; }
+            90% { opacity: 0.8; }
+        }
+        @keyframes glitch-2 {
+            0%, 85%, 100% { transform: translate(0); opacity: 0.8; }
+            86% { transform: translate(-10px, 0); }
+            87% { transform: translate(10px, 0); }
+            88% { transform: translate(-5px, 0); }
+            89% { transform: translate(5px, 0); opacity: 0; }
+            90% { opacity: 0.8; }
+        }
+        .loading-subtitle {
+            margin-top: 20px;
+            font-size: 1rem;
+            color: #8338ec;
+            letter-spacing: 4px;
+            animation: pulse-text 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse-text {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        .loading-bars {
+            display: flex;
+            gap: 8px;
+            margin-top: 40px;
+        }
+        .loading-bar {
+            width: 8px;
+            height: 50px;
+            background: linear-gradient(180deg, #ff006e, #8338ec, #3a86ff);
+            animation: bar-dance 1s ease-in-out infinite;
+        }
+        .loading-bar:nth-child(1) { animation-delay: 0s; }
+        .loading-bar:nth-child(2) { animation-delay: 0.1s; }
+        .loading-bar:nth-child(3) { animation-delay: 0.2s; }
+        .loading-bar:nth-child(4) { animation-delay: 0.3s; }
+        .loading-bar:nth-child(5) { animation-delay: 0.4s; }
+        .loading-bar:nth-child(6) { animation-delay: 0.5s; }
+        .loading-bar:nth-child(7) { animation-delay: 0.6s; }
+        @keyframes bar-dance {
+            0%, 100% { transform: scaleY(0.3); opacity: 0.5; }
+            50% { transform: scaleY(1); opacity: 1; }
+        }
+        .loading-progress {
+            margin-top: 30px;
+            width: 300px;
+            height: 4px;
+            background: #222;
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ff006e, #8338ec, #3a86ff, #ff006e);
+            background-size: 300% 100%;
+            animation: progress-flow 2s linear infinite, progress-width 3s ease-out forwards;
+            width: 0%;
+        }
+        @keyframes progress-flow {
+            0% { background-position: 100% 0; }
+            100% { background-position: 0% 0; }
+        }
+        @keyframes progress-width {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 95%; }
+        }
+        .loading-status {
+            margin-top: 15px;
+            font-size: 0.75rem;
+            color: #444;
+            letter-spacing: 2px;
+            animation: status-flicker 0.5s infinite;
+        }
+        @keyframes status-flicker {
+            0%, 90%, 100% { opacity: 1; }
+            95% { opacity: 0.5; }
+        }
+        /* Corner decorations */
+        .loading-corner {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border: 2px solid #8338ec;
+        }
+        .loading-corner.tl { top: 30px; left: 30px; border-right: none; border-bottom: none; }
+        .loading-corner.tr { top: 30px; right: 30px; border-left: none; border-bottom: none; }
+        .loading-corner.bl { bottom: 30px; left: 30px; border-right: none; border-top: none; }
+        .loading-corner.br { bottom: 30px; right: 30px; border-left: none; border-top: none; }
+        .loading-corner::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ff006e;
+            animation: corner-pulse 2s infinite;
+        }
+        .tl::after { top: -2px; left: -2px; }
+        .tr::after { top: -2px; right: -2px; }
+        .bl::after { bottom: -2px; left: -2px; }
+        .br::after { bottom: -2px; right: -2px; }
+        @keyframes corner-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+        /* Old simple loading fallback */
+        .loading {
+            color: #666;
+            text-align: center;
+            padding: 40px;
+        }
+        /* Random flicker effect on body */
+        @keyframes screen-flicker {
+            0%, 97%, 100% { opacity: 1; }
+            97.5% { opacity: 0.97; }
+            98% { opacity: 1; }
+            98.5% { opacity: 0.98; }
+        }
+        body { animation: screen-flicker 8s infinite; }
+        .filter-toggle {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.8);
+            padding: 8px 20px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            margin-left: 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .filter-toggle::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,0,110,0.1), rgba(131,56,236,0.1));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .filter-toggle:hover::before { opacity: 1; }
+        .filter-toggle:hover {
+            border-color: rgba(131,56,236,0.5);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(131,56,236,0.25);
+            transform: translateY(-1px);
+        }
+        .filter-toggle.active {
+            background: linear-gradient(135deg, rgba(255,0,110,0.15), rgba(131,56,236,0.25));
+            border-color: rgba(131,56,236,0.5);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(131,56,236,0.3);
+        }
+        .filter-panel {
+            display: none;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            background: rgba(10,10,10,0.98);
+            border-bottom: 1px solid #333;
+            padding: 20px;
+            z-index: 999;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .filter-panel.active { display: block; }
+        .filter-section { margin-bottom: 20px; }
+        .filter-section h4 { color: #888; margin-bottom: 10px; font-size: 0.85rem; }
+        .filter-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .filter-tag {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6);
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+        }
+        .filter-tag:hover {
+            border-color: rgba(131,56,236,0.4);
+            color: rgba(255,255,255,0.9);
+            box-shadow: 0 0 12px rgba(131,56,236,0.2);
+        }
+        .filter-tag.active {
+            background: linear-gradient(135deg, rgba(255,0,110,0.3), rgba(131,56,236,0.4));
+            border-color: rgba(131,56,236,0.6);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(131,56,236,0.35);
+        }
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #333;
+        }
+        .custom-filter-input {
+            background: #1a1a1a;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            width: 200px;
+        }
+        .apply-btn {
+            background: linear-gradient(135deg, rgba(255,0,110,0.4), rgba(131,56,236,0.5));
+            border: 1px solid rgba(131,56,236,0.4);
+            color: #fff;
+            padding: 8px 24px;
+            cursor: pointer;
+            font-family: inherit;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(131,56,236,0.2);
+        }
+        .apply-btn:hover {
+            background: linear-gradient(135deg, rgba(255,0,110,0.5), rgba(131,56,236,0.6));
+            box-shadow: 0 0 25px rgba(131,56,236,0.4);
+            transform: translateY(-2px);
+        }
+        .preset-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.7);
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            border-radius: 15px;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+        }
+        .preset-btn:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(131,56,236,0.4);
+            color: #fff;
+            box-shadow: 0 0 12px rgba(131,56,236,0.2);
+        }
+        .source-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #1a1a1a;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #333;
+        }
+        .source-control.disabled { opacity: 0.4; }
+        .source-name {
+            cursor: pointer;
+            font-size: 0.75rem;
+            min-width: 70px;
+            color: #fff;
+        }
+        .source-name.off { color: #666; text-decoration: line-through; }
+        .source-weight {
+            width: 60px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #333;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        .source-weight::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #8338ec;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .weight-val { font-size: 0.65rem; color: #888; width: 25px; text-align: right; }
+    </style>
+</head>
+<body>
+    <!-- Glitch Easter Egg Overlays -->
+    <div class="glitch-overlay" id="glitchOverlay"></div>
+    <div class="rgb-split" id="rgbSplit"></div>
+
+    <!-- Epic Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-corner tl"></div>
+        <div class="loading-corner tr"></div>
+        <div class="loading-corner bl"></div>
+        <div class="loading-corner br"></div>
+        <div class="loading-text">GG</div>
+        <div class="loading-subtitle">GLITCH GALLERY</div>
+        <div class="loading-bars">
+            <div class="loading-bar"></div>
+            <div class="loading-bar"></div>
+            <div class="loading-bar"></div>
+            <div class="loading-bar"></div>
+            <div class="loading-bar"></div>
+            <div class="loading-bar"></div>
+            <div class="loading-bar"></div>
+        </div>
+        <div class="loading-progress">
+            <div class="loading-progress-bar"></div>
+        </div>
+        <div class="loading-status" id="loadingStatus">INITIALIZING FEEDS...</div>
+    </div>
+
+    <header>
+        <h1 class="logo">GG <span class="logo-text">GLITCH GALLERY</span></h1>
+        <div class="nav-btns">
+            <button class="nav-btn active" onclick="showGallery()">Gallery</button>
+            <button class="nav-btn" onclick="showSaved()">Saved <span class="saved-count" id="savedCount">0</span></button>
+            <button class="filter-toggle" onclick="toggleFilters()">Filters</button>
+            <button class="filter-toggle" onclick="toggleSettings()">Settings</button>
+        </div>
+    </header>
+
+    <div class="filter-panel" id="filterPanel">
+        <div class="filter-section">
+            <h4>SOURCES
+                <button class="preset-btn" style="margin-left:15px;" onclick="allSourcesOn()">All On</button>
+                <button class="preset-btn" onclick="allSourcesOff()">All Off</button>
+            </h4>
+            <div class="filter-tags" id="sourceToggles"></div>
+        </div>
+        <div class="filter-section">
+            <h4>OBJKT ARTIST (search by Tezos wallet or alias - leave blank for all)</h4>
+            <div style="display:flex;gap:10px;align-items:center;">
+                <input type="text" class="custom-filter-input" id="objktArtistInput" placeholder="e.g. tz1... or artist alias" style="width:300px;">
+                <button class="preset-btn" onclick="setObjktArtist()">Set Artist</button>
+                <button class="preset-btn" onclick="clearObjktArtist()">Clear</button>
+                <span id="objktArtistStatus" style="color:#8338ec;font-size:0.75rem;"></span>
+            </div>
+        </div>
+        <div class="filter-section">
+            <h4>PRESETS</h4>
+            <div class="filter-tags">
+                <button class="preset-btn" style="background:#ff006e;" onclick="applyGlitchOnly()">GLITCH ONLY</button>
+                <button class="preset-btn" onclick="applyPreset('glitch')">Glitch Core</button>
+                <button class="preset-btn" onclick="applyPreset('vhs')">VHS / Retro</button>
+                <button class="preset-btn" onclick="applyPreset('cyber')">Cyberpunk</button>
+                <button class="preset-btn" onclick="applyPreset('trippy')">Trippy / Psychedelic</button>
+                <button class="preset-btn" onclick="applyPreset('minimal')">Minimal</button>
+                <button class="preset-btn" onclick="applyPreset('all')">All Filters</button>
+                <button class="preset-btn" style="background:#333;" onclick="applyPublicDomain()">Public Domain</button>
+                <button class="preset-btn" style="background:#444;" onclick="clearAllFilters()">Clear All</button>
+            </div>
+        </div>
+        <div class="filter-section">
+            <h4>ACTIVE FILTERS - searches ALL sources (click to toggle)</h4>
+            <div class="filter-tags" id="filterTags"></div>
+        </div>
+        <div class="filter-section">
+            <h4>ARTISTS (click to search for specific artists)
+                <button class="preset-btn" style="margin-left:15px;" onclick="allArtistsOn()">All On</button>
+                <button class="preset-btn" onclick="allArtistsOff()">All Off</button>
+            </h4>
+            <div class="filter-tags" id="artistTags"></div>
+        </div>
+        <div class="filter-section">
+            <h4>REDDIT SUBREDDITS (always included when Reddit source is on)</h4>
+            <div class="filter-tags" id="redditTags"></div>
+        </div>
+        <div class="filter-actions">
+            <input type="text" class="custom-filter-input" id="customFilter" placeholder="Add custom filter...">
+            <button class="preset-btn" onclick="addCustomFilter()">Add</button>
+            <button class="apply-btn" onclick="applyFilters()">Apply Now</button>
+            <span style="color:#666; font-size:0.75rem; margin-left:10px;" id="filterCount"></span>
+            <span style="color:#ff006e; font-size:0.75rem; margin-left:10px; display:none;" id="reloadIndicator">⟳ Auto-reloading...</span>
+        </div>
+    </div>
+
+    <div class="filter-panel" id="settingsPanel">
+        <div class="filter-section">
+            <h4>SOURCE WEIGHTS (adjust how much content from each source)</h4>
+            <div id="sourceControls" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;"></div>
+        </div>
+        <div class="filter-section">
+            <h4>DISPLAY SETTINGS</h4>
+            <div style="display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start;">
+                <div>
+                    <span style="color:#888;font-size:0.8rem;">Scroll Speed</span>
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:5px;">
+                        <input type="range" class="source-weight" style="width:150px;" min="0.5" max="8" step="0.5" value="2" oninput="updateScrollSpeed(this.value)" id="scrollSpeedSlider">
+                        <span id="scrollSpeedVal" style="min-width:30px;">2x</span>
+                    </div>
+                </div>
+                <div>
+                    <span style="color:#888;font-size:0.8rem;">Image Size</span>
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:5px;">
+                        <input type="range" class="source-weight" style="width:150px;" min="150" max="500" step="25" value="300" oninput="updateCardSize(this.value)" id="cardSizeSlider">
+                        <span id="cardSizeVal" style="min-width:45px;">300px</span>
+                    </div>
+                </div>
+                <div>
+                    <span style="color:#888;font-size:0.8rem;">Layout Mode</span>
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:5px;">
+                        <button class="preset-btn" id="dopamineBtn" onclick="toggleDopamineMode()" style="background:#333;">
+                            DOPAMINE RUSH
+                        </button>
+                        <span style="color:#666;font-size:0.7rem;">3 rows, chaotic scrolling</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="gallery-container" id="galleryContainer">
+        <div class="scroll-track" id="scrollTrack">
+            <div class="loading">Loading glitch art...</div>
+        </div>
+    </div>
+
+    <div class="saved-section" id="savedSection">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h2>Saved</h2>
+            <div style="display:flex;gap:10px;">
+                <button class="preset-btn" onclick="exportCollection()">Export JSON</button>
+                <label class="preset-btn" style="cursor:pointer;">
+                    Import JSON
+                    <input type="file" accept=".json" onchange="importCollection(event)" style="display:none;">
+                </label>
+            </div>
+        </div>
+        <div class="saved-grid" id="savedGrid"></div>
+    </div>
+
+    <div class="modal" id="saveModal">
+        <div class="modal-content">
+            <h3>Save</h3>
+            <input type="text" class="modal-input" id="tagInput" placeholder="Tags (e.g., favorite, dark, trippy)">
+            <input type="text" class="modal-input" id="noteInput" placeholder="Note...">
+            <div class="modal-btns">
+                <button class="modal-btn cancel" onclick="closeModal()">Cancel</button>
+                <button class="modal-btn save" onclick="confirmSave()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="fullscreen-modal" id="fullscreenModal" onclick="closeFullscreen()">
+        <img id="fullscreenImg" src="">
+        <div class="fullscreen-info" onclick="event.stopPropagation()">
+            <div class="fullscreen-title" id="fullscreenTitle"></div>
+            <div class="fullscreen-artist" id="fullscreenArtist"></div>
+            <div class="fullscreen-price" id="fullscreenPrice" style="display:none;"></div>
+            <div class="fullscreen-tags" id="fullscreenTags"></div>
+            <div class="fullscreen-actions">
+                <button class="fullscreen-save-btn" id="fullscreenSaveBtn" onclick="saveFromFullscreen()">☆ Save to Collection</button>
+                <a class="fullscreen-external-btn" id="fullscreenExternalBtn" href="#" target="_blank" onclick="event.stopPropagation();" style="display:none;">↗ View on objkt.com</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allGifs = [];
+        let savedArtworks = JSON.parse(localStorage.getItem('savedGlitchArt')) || [];
+        let currentArtwork = null;
+        let scrollPos = 0;
+        let mouseControlled = false;
+        let mouseSpeed = 0;
+        let autoSpeed = -2;
+        let cardSize = 300; // default card width
+        let dopamineMode = false;
+        let rowScrollPos = []; // for dopamine mode horizontal rows
+        let dopamineRefreshInterval = null; // auto-refresh timer for dopamine mode
+
+        // API Keys
+        const TENOR_KEY = 'AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ'; // Tenor public key
+        const GIPHY_KEY = 'Gc7131jiJuvI7IdN0HZ1D7nh0ow5BU6g'; // Giphy API key
+        const PEXELS_KEY = '563492ad6f917000010000012a4c39e704c640ad9eb24ebd49377f72'; // Pexels API key
+        const PIXABAY_KEY = '47566592-de5ebf9f52361e96516673498'; // Pixabay API key
+        const NASA_KEY = 'DEMO_KEY'; // NASA public demo key (rate limited but works)
+
+        // Source toggles (exchange, mallow, foster, pixabay disabled - no public API or needs user key)
+        let sourcesEnabled = { tenor: true, reddit: true, giphy: true, objkt: true, pexels: true, pixabay: false, nasa: true, exchange: false, mallow: false, foster: false, deviantart: true, tumblr: true, bluesky: true, archive: true, wikipedia: true };
+
+        // Source weights (1 = normal, 2 = double, 0.5 = half, etc.)
+        let sourceWeights = { tenor: 1, reddit: 1, giphy: 1, objkt: 1, pexels: 1, pixabay: 1, nasa: 1, exchange: 1, mallow: 1, foster: 1, deviantart: 1, tumblr: 1, bluesky: 1, archive: 1, wikipedia: 1 };
+
+        // Animation cache (for dopamine mode performance)
+        let animCachedTrack = null;
+        let animCachedRows = [];
+        let animLastRowCount = 0;
+
+        // objkt.com artist handle filter (e.g., "tz1abc..." or artist alias)
+        let objktArtistHandle = '';
+
+        // Famous glitch/digital artists
+        const allArtists = [
+            'Rosa Menkman', 'Sabato Visconti', 'Kim Asendorf', 'Daniel Temkin',
+            'Antonio Roberts', 'Nick Briz', 'Jon Satrom', 'Evan Meaney',
+            'Phillip Stearns', 'glitchaus', 'Sarah Zucker', 'XCOPY',
+            'Beeple', 'Mad Dog Jones', 'Coldie', 'Hackatao', 'Pak',
+            'Kevin Abosch', 'Trevor Jones', 'Dmitri Cherniak', 'Tyler Hobbs',
+            'Casey REAS', 'Rafaël Rozendaal', 'Jennifer Juniper Stratford',
+            'Kate the Cursed', 'TACHYONS+', 'Max Osiris', 'Neurocolor'
+        ];
+        let selectedArtists = [];
+
+        // Reddit subreddits for art (no API key needed)
+        const allRedditSubs = [
+            // Glitch & experimental
+            'glitch_art', 'VaporwaveAesthetics', 'currentlytripping', 'woahdude', 'trippy',
+            'loadingicon', 'perfectloops', 'pixelsorting', 'brokengifs', 'gonwild',
+            // Digital art
+            'Art', 'DigitalArt', 'ImaginaryLandscapes', 'ImaginaryCharacters', 'Cyberpunk',
+            'outrun', 'PixelArt', 'generative', 'PlotterArt', 'proceduralgeneration',
+            // Traditional & mixed
+            'AbstractArt', 'ContemporaryArt', 'museum', 'ArtPorn', 'Illustration',
+            // Animation & motion
+            'animation', 'HighQualityGifs', 'Cinemagraphs', 'SplitDepthGIFS',
+            // Photography & visual
+            'ExposurePorn', 'LongExposurePics', 'itookapicture', 'photocritique'
+        ];
+        let redditSubs = [...allRedditSubs];
+
+        // All available search terms
+        const allSearchTerms = [
+            'glitch art', 'datamosh', 'vhs glitch', 'digital glitch',
+            'pixel glitch', 'video glitch', 'glitch aesthetic', 'corrupted',
+            'distortion art', 'cyberpunk glitch', 'retro glitch', 'static noise',
+            'analog glitch', 'trippy visuals', 'psychedelic loop', 'neon glitch',
+            'rgb split', 'scan lines', 'broken tv', 'signal noise',
+            'synthwave', 'vaporwave', 'holographic', 'lcd glitch',
+            'pixel sort', 'data corruption', 'abstract loop', 'hypnotic animation'
+        ];
+
+        // Presets
+        const presets = {
+            claude: ['glitch art', 'datamosh', 'vhs glitch', 'digital glitch', 'pixel glitch', 'video glitch',
+                     'glitch aesthetic', 'corrupted', 'distortion art', 'cyberpunk glitch', 'retro glitch',
+                     'static noise', 'analog glitch', 'trippy visuals', 'psychedelic loop', 'neon glitch',
+                     'rgb split', 'scan lines', 'broken tv', 'signal noise', 'synthwave', 'vaporwave',
+                     'holographic', 'lcd glitch', 'pixel sort', 'data corruption', 'abstract loop', 'hypnotic animation'],
+            glitch: ['glitch art', 'datamosh', 'digital glitch', 'pixel glitch', 'corrupted', 'data corruption', 'pixel sort'],
+            vhs: ['vhs glitch', 'retro glitch', 'analog glitch', 'scan lines', 'broken tv', 'signal noise', 'static noise'],
+            cyber: ['cyberpunk glitch', 'neon glitch', 'synthwave', 'vaporwave', 'holographic', 'rgb split'],
+            trippy: ['trippy visuals', 'psychedelic loop', 'hypnotic animation', 'abstract loop', 'distortion art'],
+            minimal: ['glitch art', 'pixel glitch', 'static noise'],
+            all: [...allSearchTerms]
+        };
+
+        // Active search terms (start with all)
+        let searchTerms = [...allSearchTerms];
+
+        function showLoading(show = true, status = 'INITIALIZING FEEDS...') {
+            const screen = document.getElementById('loadingScreen');
+            const statusEl = document.getElementById('loadingStatus');
+            if (screen) {
+                if (show) {
+                    screen.classList.remove('hidden');
+                    screen.style.display = 'flex';
+                } else {
+                    screen.classList.add('hidden');
+                    // Remove from DOM after fade animation
+                    setTimeout(() => {
+                        if (screen.classList.contains('hidden')) {
+                            screen.style.display = 'none';
+                        }
+                    }, 500);
+                }
+            }
+            if (statusEl && status) {
+                statusEl.textContent = status;
+            }
+        }
+
+        function updateLoadingStatus(status) {
+            const statusEl = document.getElementById('loadingStatus');
+            if (statusEl) statusEl.textContent = status;
+        }
+
+        function updateLoadingProgress(percent) {
+            const progressBar = document.querySelector('.loading-progress-bar');
+            if (progressBar) {
+                // Remove the default animation and set actual progress
+                progressBar.style.animation = 'progress-flow 2s linear infinite';
+                progressBar.style.width = Math.min(percent, 100) + '%';
+                progressBar.style.transition = 'width 0.3s ease-out';
+            }
+        }
+
+        function resetLoadingProgress() {
+            const progressBar = document.querySelector('.loading-progress-bar');
+            if (progressBar) {
+                progressBar.style.animation = 'progress-flow 2s linear infinite, progress-width 3s ease-out forwards';
+                progressBar.style.width = '0%';
+                progressBar.style.transition = '';
+            }
+        }
+
+        async function loadGifs() {
+            const track = document.getElementById('scrollTrack');
+            showLoading(true, 'CONNECTING TO SOURCES...');
+
+            try {
+                const allPromises = [];
+
+                // Base limit per source (will be multiplied by weight)
+                const baseLimit = 35;
+
+                // Combine search terms with selected artists
+                const effectiveSearchTerms = [...searchTerms, ...selectedArtists];
+
+                updateLoadingStatus('FETCHING GLITCH ART...');
+
+                // === TENOR ===
+                if (sourcesEnabled.tenor && sourceWeights.tenor > 0) {
+                    const limit = Math.round(baseLimit * sourceWeights.tenor);
+                    // Wildcard: broad terms when no filters selected
+                    let terms = effectiveSearchTerms.length === 0
+                        ? ['trending', 'cool', 'awesome', 'random', 'funny', 'wow', 'satisfying', 'nature', 'space', 'fire', 'water', 'neon', 'colorful']
+                        : effectiveSearchTerms;
+                    const tenorPromises = terms.map(term =>
+                        fetch(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(term)}&key=${TENOR_KEY}&limit=${limit}&media_filter=gif`)
+                            .then(r => r.json())
+                            .then(data => ({ type: 'tenor', data }))
+                            .catch(() => ({ type: 'tenor', data: { results: [] } }))
+                    );
+                    allPromises.push(...tenorPromises);
+                }
+
+                // === GIPHY ===
+                if (sourcesEnabled.giphy && sourceWeights.giphy > 0) {
+                    const limit = Math.round(baseLimit * sourceWeights.giphy);
+                    // Wildcard: broad terms when no filters selected
+                    let terms = effectiveSearchTerms.length === 0
+                        ? ['trending', 'reaction', 'funny', 'cool', 'amazing', 'beautiful', 'wow', 'nature', 'animals', 'space', 'colorful', 'satisfying']
+                        : effectiveSearchTerms;
+                    const giphyPromises = terms.map(term =>
+                        fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(term)}&limit=${limit}&rating=r`)
+                            .then(r => r.json())
+                            .then(data => ({ type: 'giphy', data }))
+                            .catch(() => ({ type: 'giphy', data: { data: [] } }))
+                    );
+                    allPromises.push(...giphyPromises);
+                }
+
+                // === REDDIT ===
+                if (sourcesEnabled.reddit && sourceWeights.reddit > 0) {
+                    const limit = Math.round(baseLimit * sourceWeights.reddit);
+                    // Wildcard: search broad terms when no filters selected
+                    const redditSearchTerms = effectiveSearchTerms.length > 0
+                        ? effectiveSearchTerms.slice(0, 8)
+                        : ['cool', 'interesting', 'beautiful', 'amazing', 'wow', 'satisfying', 'art', 'photography'];
+                    const redditSearchPromises = redditSearchTerms.map(term =>
+                        fetch(`https://www.reddit.com/search.json?q=${encodeURIComponent(term)}&type=link&limit=${limit}&sort=relevance`)
+                            .then(r => r.json())
+                            .then(data => ({ type: 'reddit-search', data, term }))
+                            .catch(() => ({ type: 'reddit-search', data: { data: { children: [] } }, term }))
+                    );
+                    allPromises.push(...redditSearchPromises);
+                    if (redditSubs.length > 0) {
+                        const redditPromises = redditSubs.map(sub =>
+                            fetch(`https://www.reddit.com/r/${sub}/hot.json?limit=${limit}`)
+                                .then(r => r.json())
+                                .then(data => ({ type: 'reddit', data, sub }))
+                                .catch(() => ({ type: 'reddit', data: { data: { children: [] } }, sub }))
+                        );
+                        allPromises.push(...redditPromises);
+                    }
+                }
+
+                // === OBJKT.COM (Tezos NFTs) ===
+                if (sourcesEnabled.objkt && sourceWeights.objkt > 0) {
+                    const limit = Math.round(50 * sourceWeights.objkt);
+                    // Wildcard: broad tags for all types of NFT art when no filters
+                    const objktTags = effectiveSearchTerms.length > 0
+                        ? effectiveSearchTerms.map(t => t.replace(/\s+/g, ''))
+                        : ['art', 'photo', 'nature', 'abstract', 'portrait', 'landscape', 'animation', 'illustration', 'design', 'digital', '3d', 'surreal'];
+
+                    // Build query based on whether an artist is specified
+                    // Include listing/pricing data for marketplace info
+                    let objktQuery;
+                    if (objktArtistHandle) {
+                        // Query by artist (wallet address or alias)
+                        objktQuery = `
+                            query GetArtistWork {
+                                token(where: {
+                                    creators: {
+                                        holder: {
+                                            _or: [
+                                                {address: {_eq: "${objktArtistHandle}"}},
+                                                {alias: {_ilike: "%${objktArtistHandle}%"}}
+                                            ]
+                                        }
+                                    },
+                                    mime: {_in: ["image/gif", "image/png", "image/jpeg", "video/mp4"]},
+                                    artifact_uri: {_is_null: false}
+                                }, limit: ${limit}, order_by: {timestamp: desc}) {
+                                    pk
+                                    name
+                                    mime
+                                    artifact_uri
+                                    display_uri
+                                    thumbnail_uri
+                                    supply
+                                    tags { tag { name } }
+                                    creators { holder { address alias } }
+                                    fa_contract
+                                    token_id
+                                    listings_active(limit: 1, order_by: {price: asc}) {
+                                        price
+                                        currency { symbol decimals }
+                                    }
+                                }
+                            }
+                        `;
+                    } else {
+                        // Query by tags (default behavior)
+                        objktQuery = `
+                            query GetGlitchArt {
+                                token(where: {
+                                    _or: [
+                                        ${objktTags.slice(0, 15).map(tag => `{tags: {tag: {name: {_ilike: "%${tag}%"}}}}`).join(',\n')}
+                                    ],
+                                    mime: {_in: ["image/gif", "image/png", "image/jpeg", "video/mp4"]},
+                                    artifact_uri: {_is_null: false}
+                                }, limit: ${limit}, order_by: {timestamp: desc}) {
+                                    pk
+                                    name
+                                    mime
+                                    artifact_uri
+                                    display_uri
+                                    thumbnail_uri
+                                    supply
+                                    tags { tag { name } }
+                                    creators { holder { address alias } }
+                                    fa_contract
+                                    token_id
+                                    listings_active(limit: 1, order_by: {price: asc}) {
+                                        price
+                                        currency { symbol decimals }
+                                    }
+                                }
+                            }
+                        `;
+                    }
+
+                    const objktPromise = fetch('https://data.objkt.com/v3/graphql', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query: objktQuery })
+                    })
+                        .then(r => r.json())
+                        .then(data => ({ type: 'objkt', data }))
+                        .catch(() => ({ type: 'objkt', data: { data: { token: [] } } }));
+
+                    allPromises.push(objktPromise);
+                }
+
+                // === EXCHANGE.ART (Solana NFTs) ===
+                if (sourcesEnabled.exchange) {
+                    const exchangeTags = effectiveSearchTerms.length > 0
+                        ? effectiveSearchTerms.slice(0, 8)
+                        : ['glitch', 'abstract', 'generative', 'digital', 'experimental'];
+
+                    const exchangePromises = exchangeTags.map(tag =>
+                        fetch(`https://api.exchange.art/v2/nfts?q=${encodeURIComponent(tag)}&limit=20&sort=recent`)
+                            .then(r => r.json())
+                            .then(data => ({ type: 'exchange', data, tag }))
+                            .catch(() => ({ type: 'exchange', data: { nfts: [] }, tag }))
+                    );
+                    allPromises.push(...exchangePromises);
+                }
+
+                // === MALLOW.ART ===
+                if (sourcesEnabled.mallow) {
+                    const mallowTags = effectiveSearchTerms.length > 0
+                        ? effectiveSearchTerms.slice(0, 5)
+                        : ['glitch', 'digital', 'abstract'];
+
+                    const mallowPromises = mallowTags.map(tag =>
+                        fetch(`https://mallow.art/api/artworks?search=${encodeURIComponent(tag)}&limit=30`)
+                            .then(r => r.json())
+                            .then(data => ({ type: 'mallow', data, tag }))
+                            .catch(() => ({ type: 'mallow', data: { artworks: [] }, tag }))
+                    );
+                    allPromises.push(...mallowPromises);
+                }
+
+                // === FOSTER MARKETPLACE ===
+                if (sourcesEnabled.foster) {
+                    const fosterTags = effectiveSearchTerms.length > 0
+                        ? effectiveSearchTerms.slice(0, 5)
+                        : ['glitch', 'generative', 'abstract'];
+
+                    const fosterPromises = fosterTags.map(tag =>
+                        fetch(`https://api.fostermarketplace.xyz/v1/artworks?q=${encodeURIComponent(tag)}&limit=30`)
+                            .then(r => r.json())
+                            .then(data => ({ type: 'foster', data, tag }))
+                            .catch(() => ({ type: 'foster', data: { items: [] }, tag }))
+                    );
+                    allPromises.push(...fosterPromises);
+                }
+
+                // === DEVIANTART (via backend.deviantart.com API) ===
+                if (sourcesEnabled.deviantart) {
+                    const daTags = effectiveSearchTerms.length > 0
+                        ? effectiveSearchTerms.slice(0, 5)
+                        : ['glitch art', 'glitchart', 'databending'];
+
+                    const daPromises = daTags.map(tag =>
+                        fetch(`https://backend.deviantart.com/rss.xml?type=deviation&q=${encodeURIComponent(tag)}`)
+                            .then(r => r.text())
+                            .then(xml => {
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(xml, 'text/xml');
+                                const items = doc.querySelectorAll('item');
+                                const results = [];
+                                items.forEach(item => {
+                                    const title = item.querySelector('title')?.textContent;
+                                    const creator = item.querySelector('creator')?.textContent;
+                                    const mediaContent = item.querySelector('content');
+                                    const thumbnail = item.querySelector('thumbnail');
+                                    const url = mediaContent?.getAttribute('url') || thumbnail?.getAttribute('url');
+                                    if (url) {
+                                        results.push({ title, creator, url });
+                                    }
+                                });
+                                return { type: 'deviantart', data: results, tag };
+                            })
+                            .catch(() => ({ type: 'deviantart', data: [], tag }))
+                    );
+                    allPromises.push(...daPromises);
+                }
+
+                // === TUMBLR (tagged posts) ===
+                if (sourcesEnabled.tumblr) {
+                    const tumblrTags = effectiveSearchTerms.length > 0
+                        ? effectiveSearchTerms.slice(0, 5).map(t => t.replace(/\s+/g, ''))
+                        : ['glitchart', 'glitch', 'datamosh'];
+
+                    const tumblrPromises = tumblrTags.map(tag =>
+                        fetch(`https://api.tumblr.com/v2/tagged?tag=${encodeURIComponent(tag)}&api_key=fuiKNFp9vQFvjLNvx4sUwti4Yb5yGutBN4Xh10LXZhhRKjWlV4`)
+                            .then(r => r.json())
+                            .then(data => ({ type: 'tumblr', data: data.response || [], tag }))
+                            .catch(() => ({ type: 'tumblr', data: [], tag }))
+                    );
+                    allPromises.push(...tumblrPromises);
+                }
+
+                // === BLUESKY (public API) ===
+                if (sourcesEnabled.bluesky) {
+                    const bskyTags = effectiveSearchTerms.length > 0
+                        ? effectiveSearchTerms.slice(0, 5)
+                        : ['glitch art', 'glitchart', 'digital art'];
+
+                    const bskyPromises = bskyTags.map(tag =>
+                        fetch(`https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(tag)}&limit=30`)
+                            .then(r => r.json())
+                            .then(data => ({ type: 'bluesky', data: data.posts || [], tag }))
+                            .catch(() => ({ type: 'bluesky', data: [], tag }))
+                    );
+                    allPromises.push(...bskyPromises);
+                }
+
+                // === ARCHIVE.ORG ===
+                if (sourcesEnabled.archive) {
+                    const archiveTags = effectiveSearchTerms.length > 0
+                        ? effectiveSearchTerms.slice(0, 5)
+                        : ['glitch art', 'video art', 'experimental video'];
+
+                    const archivePromises = archiveTags.map(tag =>
+                        fetch(`https://archive.org/advancedsearch.php?q=${encodeURIComponent(tag)}&fl=identifier,title,creator,description&rows=30&output=json&mediatype=movies,image`)
+                            .then(r => r.json())
+                            .then(data => ({ type: 'archive', data: data.response?.docs || [], tag }))
+                            .catch(() => ({ type: 'archive', data: [], tag }))
+                    );
+                    allPromises.push(...archivePromises);
+                }
+
+                // === WIKIPEDIA (Commons) ===
+                if (sourcesEnabled.wikipedia) {
+                    const wikiTags = effectiveSearchTerms.length > 0
+                        ? effectiveSearchTerms.slice(0, 3)
+                        : ['glitch art', 'digital art'];
+
+                    const wikiPromises = wikiTags.map(tag =>
+                        fetch(`https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(tag)}&srnamespace=6&srlimit=30&format=json&origin=*`)
+                            .then(r => r.json())
+                            .then(data => ({ type: 'wikipedia', data: data.query?.search || [], tag }))
+                            .catch(() => ({ type: 'wikipedia', data: [], tag }))
+                    );
+                    allPromises.push(...wikiPromises);
+                }
+
+                // === PEXELS (Images + Videos) ===
+                if (sourcesEnabled.pexels && sourceWeights.pexels > 0) {
+                    const limit = Math.round(15 * sourceWeights.pexels);
+                    const pexelsTags = effectiveSearchTerms.length > 0
+                        ? effectiveSearchTerms.slice(0, 4)
+                        : ['abstract', 'art', 'digital', 'colorful'];
+
+                    // Pexels photos
+                    const pexelsPhotoPromises = pexelsTags.map(tag =>
+                        fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(tag)}&per_page=${limit}`, {
+                            headers: { 'Authorization': PEXELS_KEY }
+                        })
+                            .then(r => r.json())
+                            .then(data => ({ type: 'pexels-photo', data: data.photos || [], tag }))
+                            .catch(() => ({ type: 'pexels-photo', data: [], tag }))
+                    );
+                    allPromises.push(...pexelsPhotoPromises);
+
+                    // Pexels videos
+                    const pexelsVideoPromises = pexelsTags.slice(0, 2).map(tag =>
+                        fetch(`https://api.pexels.com/videos/search?query=${encodeURIComponent(tag)}&per_page=${limit}`, {
+                            headers: { 'Authorization': PEXELS_KEY }
+                        })
+                            .then(r => r.json())
+                            .then(data => ({ type: 'pexels-video', data: data.videos || [], tag }))
+                            .catch(() => ({ type: 'pexels-video', data: [], tag }))
+                    );
+                    allPromises.push(...pexelsVideoPromises);
+                }
+
+                // === PIXABAY (Images + Videos - Public Domain) ===
+                if (sourcesEnabled.pixabay && sourceWeights.pixabay > 0) {
+                    const limit = Math.round(20 * sourceWeights.pixabay);
+                    const pixabayTags = effectiveSearchTerms.length > 0
+                        ? effectiveSearchTerms.slice(0, 4)
+                        : ['abstract', 'art', 'digital', 'pattern'];
+
+                    // Pixabay images
+                    const pixabayImagePromises = pixabayTags.map(tag =>
+                        fetch(`https://pixabay.com/api/?key=${PIXABAY_KEY}&q=${encodeURIComponent(tag)}&per_page=${limit}&image_type=all`)
+                            .then(r => r.json())
+                            .then(data => ({ type: 'pixabay-image', data: data.hits || [], tag }))
+                            .catch(() => ({ type: 'pixabay-image', data: [], tag }))
+                    );
+                    allPromises.push(...pixabayImagePromises);
+
+                    // Pixabay videos
+                    const pixabayVideoPromises = pixabayTags.slice(0, 2).map(tag =>
+                        fetch(`https://pixabay.com/api/videos/?key=${PIXABAY_KEY}&q=${encodeURIComponent(tag)}&per_page=${limit}`)
+                            .then(r => r.json())
+                            .then(data => ({ type: 'pixabay-video', data: data.hits || [], tag }))
+                            .catch(() => ({ type: 'pixabay-video', data: [], tag }))
+                    );
+                    allPromises.push(...pixabayVideoPromises);
+                }
+
+                // === NASA (Images + Videos - Public Domain) ===
+                if (sourcesEnabled.nasa && sourceWeights.nasa > 0) {
+                    const nasaTags = effectiveSearchTerms.length > 0
+                        ? effectiveSearchTerms.slice(0, 3)
+                        : ['nebula', 'galaxy', 'earth', 'aurora'];
+
+                    const nasaPromises = nasaTags.map(tag =>
+                        fetch(`https://images-api.nasa.gov/search?q=${encodeURIComponent(tag)}&media_type=image,video`)
+                            .then(r => r.json())
+                            .then(data => ({ type: 'nasa', data: data.collection?.items || [], tag }))
+                            .catch(() => ({ type: 'nasa', data: [], tag }))
+                    );
+                    allPromises.push(...nasaPromises);
+                }
+
+                const results = await Promise.all(allPromises);
+
+                updateLoadingStatus('PROCESSING ' + results.length + ' FEEDS...');
+
+                // Process results by type
+                results.forEach(result => {
+                    if (result.type === 'tenor' && result.data.results) {
+                        result.data.results.forEach(item => {
+                            allGifs.push({
+                                id: 'tenor_' + item.id,
+                                title: item.content_description || 'Untitled',
+                                username: item.itemurl ? new URL(item.itemurl).pathname.split('/')[1] : 'Unknown',
+                                tags: item.tags || [],
+                                source: 'Tenor',
+                                images: {
+                                    fixed_height: {
+                                        url: item.media_formats?.gif?.url || item.media_formats?.tinygif?.url
+                                    },
+                                    original: {
+                                        url: item.media_formats?.gif?.url
+                                    }
+                                }
+                            });
+                        });
+                    }
+
+                    if (result.type === 'giphy' && result.data.data) {
+                        result.data.data.forEach(item => {
+                            allGifs.push({
+                                id: 'giphy_' + item.id,
+                                title: item.title || 'Untitled',
+                                username: item.username || item.user?.username || 'Unknown',
+                                tags: item.tags || [],
+                                source: 'Giphy',
+                                images: {
+                                    fixed_height: {
+                                        url: item.images?.fixed_height?.url
+                                    },
+                                    original: {
+                                        url: item.images?.original?.url
+                                    }
+                                }
+                            });
+                        });
+                    }
+
+                    // Process Reddit subreddit results
+                    if (result.type === 'reddit' && result.data.data && result.data.data.children) {
+                        result.data.data.children.forEach(post => {
+                            const data = post.data;
+                            if (data.url && (
+                                data.url.endsWith('.gif') ||
+                                data.url.includes('i.redd.it') ||
+                                data.url.includes('i.imgur.com')
+                            )) {
+                                let url = data.url;
+                                if (url.endsWith('.gifv')) url = url.replace('.gifv', '.gif');
+
+                                allGifs.push({
+                                    id: 'reddit_' + data.id,
+                                    title: data.title || 'Untitled',
+                                    username: data.author || 'Unknown',
+                                    tags: [data.subreddit],
+                                    source: 'Reddit r/' + data.subreddit,
+                                    images: {
+                                        fixed_height: { url: url },
+                                        original: { url: url }
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    // Process Reddit search results
+                    if (result.type === 'reddit-search' && result.data.data && result.data.data.children) {
+                        result.data.data.children.forEach(post => {
+                            const data = post.data;
+                            if (data.url && (
+                                data.url.endsWith('.gif') ||
+                                data.url.endsWith('.png') ||
+                                data.url.endsWith('.jpg') ||
+                                data.url.includes('i.redd.it') ||
+                                data.url.includes('i.imgur.com')
+                            )) {
+                                let url = data.url;
+                                if (url.endsWith('.gifv')) url = url.replace('.gifv', '.gif');
+
+                                allGifs.push({
+                                    id: 'reddit_' + data.id,
+                                    title: data.title || 'Untitled',
+                                    username: data.author || 'Unknown',
+                                    tags: [result.term, data.subreddit].filter(Boolean),
+                                    source: `Reddit (${result.term})`,
+                                    images: {
+                                        fixed_height: { url: url },
+                                        original: { url: url }
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    if (result.type === 'objkt' && result.data.data && result.data.data.token) {
+                        result.data.data.token.forEach(token => {
+                            // Convert IPFS URIs to gateway URLs
+                            let displayUrl = token.display_uri || token.thumbnail_uri || token.artifact_uri;
+                            if (displayUrl && displayUrl.startsWith('ipfs://')) {
+                                displayUrl = displayUrl.replace('ipfs://', 'https://ipfs.io/ipfs/');
+                            }
+
+                            if (displayUrl) {
+                                const artist = token.creators?.[0]?.holder?.alias ||
+                                              token.creators?.[0]?.holder?.address?.slice(0, 8) + '...' ||
+                                              'Unknown';
+                                const tags = token.tags?.map(t => t.tag?.name).filter(Boolean) || [];
+
+                                // Parse pricing info
+                                const listing = token.listings_active?.[0];
+                                let price = null;
+                                let priceDisplay = null;
+                                let available = false;
+
+                                if (listing) {
+                                    const decimals = listing.currency?.decimals || 6;
+                                    const symbol = listing.currency?.symbol || 'XTZ';
+                                    price = listing.price / Math.pow(10, decimals);
+                                    priceDisplay = `${price.toFixed(2)} ${symbol}`;
+                                    available = true;
+                                }
+
+                                // Build objkt.com URL
+                                const objktUrl = token.fa_contract && token.token_id
+                                    ? `https://objkt.com/tokens/${token.fa_contract}/${token.token_id}`
+                                    : `https://objkt.com/tokens/${token.pk}`;
+
+                                allGifs.push({
+                                    id: 'objkt_' + token.pk,
+                                    title: token.name || 'Untitled',
+                                    username: artist,
+                                    tags: tags,
+                                    source: 'objkt.com',
+                                    mime: token.mime,
+                                    images: {
+                                        fixed_height: { url: displayUrl },
+                                        original: { url: displayUrl }
+                                    },
+                                    // NFT marketplace data
+                                    externalUrl: objktUrl,
+                                    price: price,
+                                    priceDisplay: priceDisplay,
+                                    available: available,
+                                    supply: token.supply || 1
+                                });
+                            }
+                        });
+                    }
+
+                    // Process Exchange.art results
+                    if (result.type === 'exchange' && result.data.nfts) {
+                        result.data.nfts.forEach(nft => {
+                            const imageUrl = nft.image || nft.thumbnail || nft.media?.uri;
+                            if (imageUrl) {
+                                allGifs.push({
+                                    id: 'exchange_' + nft.mint,
+                                    title: nft.name || 'Untitled',
+                                    username: nft.artist?.name || nft.creator || 'Unknown',
+                                    tags: [result.tag, ...(nft.tags || [])].filter(Boolean),
+                                    source: 'Exchange.art (Solana)',
+                                    images: {
+                                        fixed_height: { url: imageUrl },
+                                        original: { url: imageUrl }
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    // Process mallow.art results
+                    if (result.type === 'mallow' && result.data.artworks) {
+                        result.data.artworks.forEach(art => {
+                            const imageUrl = art.image || art.thumbnail || art.media_url;
+                            if (imageUrl) {
+                                allGifs.push({
+                                    id: 'mallow_' + art.id,
+                                    title: art.title || art.name || 'Untitled',
+                                    username: art.artist?.name || art.creator || 'Unknown',
+                                    tags: [result.tag, ...(art.tags || [])].filter(Boolean),
+                                    source: 'mallow.art',
+                                    images: {
+                                        fixed_height: { url: imageUrl },
+                                        original: { url: imageUrl }
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    // Process Foster results
+                    if (result.type === 'foster' && result.data.items) {
+                        result.data.items.forEach(item => {
+                            const imageUrl = item.image || item.thumbnail || item.media;
+                            if (imageUrl) {
+                                allGifs.push({
+                                    id: 'foster_' + item.id,
+                                    title: item.name || item.title || 'Untitled',
+                                    username: item.artist || item.creator || 'Unknown',
+                                    tags: [result.tag, ...(item.tags || [])].filter(Boolean),
+                                    source: 'Foster',
+                                    images: {
+                                        fixed_height: { url: imageUrl },
+                                        original: { url: imageUrl }
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    // Process DeviantArt results
+                    if (result.type === 'deviantart' && Array.isArray(result.data)) {
+                        result.data.forEach((item, i) => {
+                            if (item.url) {
+                                allGifs.push({
+                                    id: 'da_' + result.tag + '_' + i,
+                                    title: item.title || 'Untitled',
+                                    username: item.creator || 'Unknown',
+                                    tags: [result.tag],
+                                    source: 'DeviantArt',
+                                    images: {
+                                        fixed_height: { url: item.url },
+                                        original: { url: item.url }
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    // Process Tumblr results
+                    if (result.type === 'tumblr' && Array.isArray(result.data)) {
+                        result.data.forEach(post => {
+                            let imageUrl = null;
+                            if (post.photos && post.photos[0]) {
+                                imageUrl = post.photos[0].original_size?.url || post.photos[0].alt_sizes?.[0]?.url;
+                            }
+                            if (imageUrl) {
+                                allGifs.push({
+                                    id: 'tumblr_' + post.id,
+                                    title: post.summary || post.caption?.replace(/<[^>]*>/g, '').slice(0, 50) || 'Untitled',
+                                    username: post.blog_name || 'Unknown',
+                                    tags: post.tags || [result.tag],
+                                    source: 'Tumblr',
+                                    images: {
+                                        fixed_height: { url: imageUrl },
+                                        original: { url: imageUrl }
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    // Process Bluesky results
+                    if (result.type === 'bluesky' && Array.isArray(result.data)) {
+                        result.data.forEach(post => {
+                            const embed = post.embed;
+                            let imageUrl = null;
+                            if (embed?.images && embed.images[0]) {
+                                imageUrl = embed.images[0].fullsize || embed.images[0].thumb;
+                            }
+                            if (imageUrl) {
+                                allGifs.push({
+                                    id: 'bsky_' + post.uri,
+                                    title: post.record?.text?.slice(0, 60) || 'Untitled',
+                                    username: post.author?.handle || post.author?.displayName || 'Unknown',
+                                    tags: [result.tag],
+                                    source: 'Bluesky',
+                                    images: {
+                                        fixed_height: { url: imageUrl },
+                                        original: { url: imageUrl }
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    // Process Archive.org results
+                    if (result.type === 'archive' && Array.isArray(result.data)) {
+                        result.data.forEach(item => {
+                            const imageUrl = `https://archive.org/services/img/${item.identifier}`;
+                            allGifs.push({
+                                id: 'archive_' + item.identifier,
+                                title: item.title || 'Untitled',
+                                username: item.creator || 'Unknown',
+                                tags: [result.tag],
+                                source: 'Archive.org',
+                                images: {
+                                    fixed_height: { url: imageUrl },
+                                    original: { url: imageUrl }
+                                }
+                            });
+                        });
+                    }
+
+                    // Process Wikipedia Commons results
+                    if (result.type === 'wikipedia' && Array.isArray(result.data)) {
+                        result.data.forEach(item => {
+                            const fileName = item.title.replace('File:', '');
+                            const imageUrl = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}?width=400`;
+                            allGifs.push({
+                                id: 'wiki_' + item.pageid,
+                                title: fileName.replace(/_/g, ' ').replace(/\.\w+$/, ''),
+                                username: 'Wikimedia Commons',
+                                tags: [result.tag],
+                                source: 'Wikipedia',
+                                images: {
+                                    fixed_height: { url: imageUrl },
+                                    original: { url: imageUrl }
+                                }
+                            });
+                        });
+                    }
+
+                    // Process Pexels photo results
+                    if (result.type === 'pexels-photo' && Array.isArray(result.data)) {
+                        result.data.forEach(photo => {
+                            allGifs.push({
+                                id: 'pexels_' + photo.id,
+                                title: photo.alt || 'Pexels Photo',
+                                username: photo.photographer || 'Unknown',
+                                tags: [result.tag],
+                                source: 'Pexels',
+                                images: {
+                                    fixed_height: { url: photo.src?.medium || photo.src?.small },
+                                    original: { url: photo.src?.large || photo.src?.original }
+                                }
+                            });
+                        });
+                    }
+
+                    // Process Pexels video results
+                    if (result.type === 'pexels-video' && Array.isArray(result.data)) {
+                        result.data.forEach(video => {
+                            const videoFile = video.video_files?.find(f => f.quality === 'sd') || video.video_files?.[0];
+                            const thumbUrl = video.image || video.video_pictures?.[0]?.picture;
+                            if (thumbUrl) {
+                                allGifs.push({
+                                    id: 'pexels_v_' + video.id,
+                                    title: 'Pexels Video',
+                                    username: video.user?.name || 'Unknown',
+                                    tags: [result.tag, 'video'],
+                                    source: 'Pexels Video',
+                                    images: {
+                                        fixed_height: { url: thumbUrl },
+                                        original: { url: thumbUrl }
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    // Process Pixabay image results (Public Domain)
+                    if (result.type === 'pixabay-image' && Array.isArray(result.data)) {
+                        result.data.forEach(img => {
+                            allGifs.push({
+                                id: 'pixabay_' + img.id,
+                                title: img.tags || 'Pixabay Image',
+                                username: img.user || 'Unknown',
+                                tags: [result.tag, 'public domain'],
+                                source: 'Pixabay (CC0)',
+                                images: {
+                                    fixed_height: { url: img.webformatURL },
+                                    original: { url: img.largeImageURL }
+                                }
+                            });
+                        });
+                    }
+
+                    // Process Pixabay video results (Public Domain)
+                    if (result.type === 'pixabay-video' && Array.isArray(result.data)) {
+                        result.data.forEach(vid => {
+                            const thumbUrl = `https://i.vimeocdn.com/video/${vid.picture_id}_640x360.jpg`;
+                            allGifs.push({
+                                id: 'pixabay_v_' + vid.id,
+                                title: vid.tags || 'Pixabay Video',
+                                username: vid.user || 'Unknown',
+                                tags: [result.tag, 'video', 'public domain'],
+                                source: 'Pixabay Video (CC0)',
+                                images: {
+                                    fixed_height: { url: thumbUrl },
+                                    original: { url: thumbUrl }
+                                }
+                            });
+                        });
+                    }
+
+                    // Process NASA results (Public Domain)
+                    if (result.type === 'nasa' && Array.isArray(result.data)) {
+                        result.data.forEach(item => {
+                            const data = item.data?.[0];
+                            const links = item.links;
+                            const thumbUrl = links?.find(l => l.rel === 'preview')?.href;
+                            if (thumbUrl && data) {
+                                allGifs.push({
+                                    id: 'nasa_' + data.nasa_id,
+                                    title: data.title || 'NASA Image',
+                                    username: data.center || 'NASA',
+                                    tags: [result.tag, 'space', 'public domain'],
+                                    source: 'NASA',
+                                    images: {
+                                        fixed_height: { url: thumbUrl },
+                                        original: { url: thumbUrl.replace('~thumb', '~medium') }
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+
+                // Remove duplicates by ID
+                const seen = new Set();
+                allGifs = allGifs.filter(gif => {
+                    if (seen.has(gif.id)) return false;
+                    seen.add(gif.id);
+                    return true;
+                });
+
+                // Shuffle
+                allGifs.sort(() => Math.random() - 0.5);
+
+                updateLoadingStatus('RENDERING ' + allGifs.length + ' ARTWORKS...');
+
+                console.log(`Loaded ${allGifs.length} GIFs`);
+
+                // Small delay to show the final status
+                setTimeout(() => {
+                    renderGallery();
+                    showLoading(false);
+                }, 500);
+            } catch (e) {
+                console.error('Error loading GIFs:', e);
+                showLoading(false);
+                track.innerHTML = '<div class="loading">Error loading. Refresh to try again.</div>';
+            }
+        }
+
+        function renderGallery() {
+            const container = document.getElementById('galleryContainer');
+            const track = document.getElementById('scrollTrack');
+
+            if (allGifs.length === 0) {
+                track.innerHTML = '<div class="loading">No GIFs found</div>';
+                return;
+            }
+
+            // Card HTML generator - optimized with async decoding
+            function makeCard(gif, idx) {
+                const url = gif.images?.fixed_height?.url || gif.images?.original?.url;
+                const title = gif.title || 'Untitled';
+                const user = gif.username || gif.user?.username || 'Unknown';
+                const source = gif.source || '';
+                const tags = gif.tags || [];
+                const firstTag = tags.length > 0 ? tags[0] : '';
+
+                // NFT pricing badge (for objkt and other NFT sources)
+                let priceBadge = '';
+                if (gif.priceDisplay) {
+                    priceBadge = `<div class="price-badge available">${gif.priceDisplay}</div>`;
+                } else if (gif.source && gif.source.includes('objkt')) {
+                    priceBadge = `<div class="price-badge sold-out">Sold</div>`;
+                }
+
+                return `
+                    <div class="art-card" style="width:${cardSize}px;" onclick="openFullscreen(${idx})">
+                        <div class="art-media" style="height:${cardSize}px;">
+                            <img src="${url}" alt="${title}" loading="lazy" decoding="async">
+                            ${priceBadge}
+                        </div>
+                        <button class="bookmark-btn ${isBookmarked(gif.id) ? 'saved' : ''}"
+                                onclick="event.stopPropagation(); toggleBookmark(${idx})">
+                            ${isBookmarked(gif.id) ? '★' : '☆'}
+                        </button>
+                        <div class="art-info">
+                            <div><span style="color:#8338ec;">${source}</span></div>
+                            <div style="color:#fff;">${user}</div>
+                            ${firstTag ? `<div style="color:#3a86ff;font-size:0.7rem;">#${firstTag}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (dopamineMode) {
+                // Dopamine Rush: multiple rows scrolling in alternating directions
+                container.classList.add('dopamine-mode');
+
+                // Calculate how many items per row and how many rows to fill screen
+                const itemsPerRow = Math.ceil(window.innerWidth / 200) + 2;
+                const numRows = Math.ceil((window.innerHeight - 65) / 180);
+
+                // Shuffle gifs for variety
+                const shuffled = [...allGifs].sort(() => Math.random() - 0.5);
+
+                // Split gifs into separate pools for each row (no overlap)
+                const gifsPerRowPool = Math.floor(shuffled.length / numRows);
+
+                let rowsHtml = '';
+                for (let r = 0; r < numRows; r++) {
+                    // Each row gets its own unique slice of gifs
+                    const startIdx = r * gifsPerRowPool;
+                    const rowPool = shuffled.slice(startIdx, startIdx + gifsPerRowPool);
+
+                    // If pool is too small, we need to pad it
+                    const minItems = itemsPerRow * 3;
+                    const rowGifs = [];
+
+                    // Fill row with unique items from this row's pool only
+                    for (let i = 0; i < minItems; i++) {
+                        rowGifs.push(rowPool[i % rowPool.length]);
+                    }
+
+                    rowsHtml += `
+                        <div class="dopamine-row" id="dopRow${r}">
+                            ${rowGifs.map((gif, i) => makeCard(gif, allGifs.indexOf(gif))).join('')}
+                        </div>
+                    `;
+                }
+
+                track.innerHTML = rowsHtml;
+                track.style.display = ''; // CSS will handle flex column
+            } else {
+                // Normal single row mode
+                container.classList.remove('dopamine-mode');
+                track.style.display = ''; // Reset display style
+
+                // Calculate how many cards fit in viewport + buffer for seamless loop
+                const viewportCards = Math.ceil(window.innerWidth / (cardSize + 12)) + 4;
+                const minCardsNeeded = viewportCards * 3; // 3x viewport for smooth seamless loop
+
+                // Only use as many gifs as needed, then duplicate for seamless loop
+                // This prevents loading 500+ images when we only need ~50
+                const sourceGifs = allGifs.length > minCardsNeeded
+                    ? allGifs.slice(0, minCardsNeeded)
+                    : allGifs;
+
+                // Double for seamless loop (but only the subset we need)
+                const gifs = [...sourceGifs, ...sourceGifs];
+
+                track.innerHTML = gifs.map((gif, i) => {
+                    const idx = allGifs.indexOf(gif);
+                    return makeCard(gif, idx >= 0 ? idx : i % sourceGifs.length);
+                }).join('');
+
+                console.log(`Non-dopamine mode: Rendering ${gifs.length} cards (${sourceGifs.length} unique) from ${allGifs.length} available`);
+            }
+        }
+
+        let currentFullscreenIndex = null;
+
+        function openFullscreen(index) {
+            currentFullscreenIndex = index;
+            fullscreenOpen = true;
+            mouseSpeed = 0;
+
+            const gif = allGifs[index];
+            const url = gif.images?.fixed_height?.url || gif.images?.original?.url;
+            const artist = gif.username || 'Unknown artist';
+            const isSaved = isBookmarked(gif.id);
+
+            document.getElementById('fullscreenImg').src = url;
+            document.getElementById('fullscreenTitle').textContent = gif.title || 'Untitled';
+            document.getElementById('fullscreenArtist').textContent = `by ${artist} · ${gif.source || 'Unknown source'}`;
+
+            // Display price info (for NFTs)
+            const priceEl = document.getElementById('fullscreenPrice');
+            if (gif.priceDisplay) {
+                priceEl.textContent = `${gif.priceDisplay} · Available`;
+                priceEl.className = 'fullscreen-price';
+                priceEl.style.display = 'block';
+            } else if (gif.source && gif.source.includes('objkt')) {
+                priceEl.textContent = 'Sold Out / Not Listed';
+                priceEl.className = 'fullscreen-price sold-out';
+                priceEl.style.display = 'block';
+            } else {
+                priceEl.style.display = 'none';
+            }
+
+            // Display external link button (for NFTs and other external sources)
+            const externalBtn = document.getElementById('fullscreenExternalBtn');
+            if (gif.externalUrl) {
+                externalBtn.href = gif.externalUrl;
+                externalBtn.textContent = `↗ View on ${gif.source || 'External Site'}`;
+                externalBtn.style.display = 'inline-block';
+            } else {
+                externalBtn.style.display = 'none';
+            }
+
+            // Display tags - clicking a tag adds it as a filter
+            const tags = gif.tags || [];
+            const tagsHtml = tags.length > 0
+                ? tags.map(tag => `<span class="fullscreen-tag" onclick="addTagAsFilter('${tag}')">${tag}</span>`).join('')
+                : '<span style="color:#666;font-size:0.75rem;">No tags available</span>';
+            document.getElementById('fullscreenTags').innerHTML = tagsHtml;
+
+            // Update save button
+            const saveBtn = document.getElementById('fullscreenSaveBtn');
+            saveBtn.style.display = 'inline-block';
+            if (isSaved) {
+                saveBtn.textContent = '★ Saved';
+                saveBtn.style.background = '#ff006e';
+            } else {
+                saveBtn.textContent = '☆ Save to Collection';
+                saveBtn.style.background = '#8338ec';
+            }
+
+            document.getElementById('fullscreenModal').classList.add('active');
+        }
+
+        function addTagAsFilter(tag) {
+            if (!allSearchTerms.includes(tag)) {
+                allSearchTerms.push(tag);
+            }
+            if (!searchTerms.includes(tag)) {
+                searchTerms.push(tag);
+            }
+            closeFullscreen();
+            document.getElementById('filterPanel').classList.add('active');
+            renderFilterTags();
+        }
+
+        function closeFullscreen() {
+            document.getElementById('fullscreenModal').classList.remove('active');
+            fullscreenOpen = false;
+            currentFullscreenIndex = null;
+        }
+
+        function openSavedFullscreen(url, title) {
+            fullscreenOpen = true;
+            mouseSpeed = 0;
+            document.getElementById('fullscreenImg').src = url;
+            document.getElementById('fullscreenTitle').textContent = title || 'Saved artwork';
+            document.getElementById('fullscreenArtist').textContent = '';
+            document.getElementById('fullscreenTags').innerHTML = '<span style="color:#666;font-size:0.75rem;">Saved item</span>';
+            document.getElementById('fullscreenSaveBtn').style.display = 'none';
+            document.getElementById('fullscreenModal').classList.add('active');
+        }
+
+        function saveFromFullscreen() {
+            if (currentFullscreenIndex === null) return;
+            const gif = allGifs[currentFullscreenIndex];
+            if (isBookmarked(gif.id)) {
+                // Already saved - remove it
+                savedArtworks = savedArtworks.filter(s => s.id !== gif.id);
+                localStorage.setItem('savedGlitchArt', JSON.stringify(savedArtworks));
+                updateSavedCount();
+                renderGallery();
+                openFullscreen(currentFullscreenIndex); // Refresh the modal
+            } else {
+                // Save it
+                currentArtwork = gif;
+                closeFullscreen();
+                document.getElementById('saveModal').classList.add('active');
+            }
+        }
+
+        function isBookmarked(id) {
+            return savedArtworks.some(s => s.id === id);
+        }
+
+        function toggleBookmark(index) {
+            currentArtwork = allGifs[index];
+            if (isBookmarked(currentArtwork.id)) {
+                savedArtworks = savedArtworks.filter(s => s.id !== currentArtwork.id);
+                localStorage.setItem('savedGlitchArt', JSON.stringify(savedArtworks));
+                updateSavedCount();
+                renderGallery();
+            } else {
+                document.getElementById('saveModal').classList.add('active');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('saveModal').classList.remove('active');
+            document.getElementById('tagInput').value = '';
+            document.getElementById('noteInput').value = '';
+        }
+
+        function confirmSave() {
+            const url = currentArtwork.images?.fixed_height?.url || currentArtwork.images?.original?.url;
+            savedArtworks.push({
+                id: currentArtwork.id,
+                url: url,
+                title: currentArtwork.title || 'Untitled',
+                user: currentArtwork.username || currentArtwork.user?.username || 'Unknown',
+                tags: document.getElementById('tagInput').value,
+                note: document.getElementById('noteInput').value,
+                savedAt: new Date().toISOString()
+            });
+            localStorage.setItem('savedGlitchArt', JSON.stringify(savedArtworks));
+            updateSavedCount();
+            closeModal();
+            renderGallery();
+        }
+
+        function updateSavedCount() {
+            document.getElementById('savedCount').textContent = savedArtworks.length;
+        }
+
+        function showGallery() {
+            document.getElementById('galleryContainer').classList.remove('hidden');
+            document.getElementById('savedSection').classList.remove('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.nav-btn')[0].classList.add('active');
+        }
+
+        function showSaved() {
+            document.getElementById('galleryContainer').classList.add('hidden');
+            document.getElementById('savedSection').classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.nav-btn')[1].classList.add('active');
+            renderSaved();
+        }
+
+        function renderSaved() {
+            const grid = document.getElementById('savedGrid');
+            if (savedArtworks.length === 0) {
+                grid.innerHTML = '<p style="color:#666;grid-column:1/-1;text-align:center;padding:40px;">No saved art yet. Click ☆ to save.</p>';
+                return;
+            }
+            grid.innerHTML = savedArtworks.map((art, i) => `
+                <div class="saved-card">
+                    <div class="art-media" onclick="openSavedFullscreen('${art.url}', '${art.title.replace(/'/g, "\\'")}')">
+                        <img src="${art.url}" alt="${art.title}">
+                    </div>
+                    <div class="art-info">
+                        <div>${art.user} · ${art.title.substring(0, 25)}</div>
+                        <input type="text" class="tag-input" value="${art.tags || ''}" placeholder="Tags..."
+                               onchange="updateTags(${i}, this.value)">
+                        <input type="text" class="tag-input" value="${art.note || ''}" placeholder="Note..."
+                               onchange="updateNote(${i}, this.value)">
+                        <button class="remove-btn" onclick="removeSaved(${i})">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateTags(i, v) {
+            savedArtworks[i].tags = v;
+            localStorage.setItem('savedGlitchArt', JSON.stringify(savedArtworks));
+        }
+        function updateNote(i, v) {
+            savedArtworks[i].note = v;
+            localStorage.setItem('savedGlitchArt', JSON.stringify(savedArtworks));
+        }
+        function removeSaved(i) {
+            savedArtworks.splice(i, 1);
+            localStorage.setItem('savedGlitchArt', JSON.stringify(savedArtworks));
+            updateSavedCount();
+            renderSaved();
+        }
+
+        function exportCollection() {
+            if (savedArtworks.length === 0) {
+                alert('No saved items to export');
+                return;
+            }
+            const data = JSON.stringify(savedArtworks, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'glitch-collection-' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importCollection(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        // Merge with existing, avoid duplicates by ID
+                        const existingIds = new Set(savedArtworks.map(a => a.id));
+                        let added = 0;
+                        imported.forEach(item => {
+                            if (!existingIds.has(item.id)) {
+                                savedArtworks.push(item);
+                                added++;
+                            }
+                        });
+                        localStorage.setItem('savedGlitchArt', JSON.stringify(savedArtworks));
+                        updateSavedCount();
+                        renderSaved();
+                        renderGallery();
+                        alert(`Imported ${added} new items (${imported.length - added} duplicates skipped)`);
+                    } else {
+                        alert('Invalid format - expected array of saved items');
+                    }
+                } catch (err) {
+                    alert('Error reading file: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input
+        }
+
+        // Scroll system
+        let fullscreenOpen = false;
+
+        function setupScroll() {
+            const track = document.getElementById('scrollTrack');
+
+            // Only control scroll when hovering actual video cards
+            track.addEventListener('mouseenter', () => { mouseControlled = true; });
+            track.addEventListener('mouseleave', () => { mouseControlled = false; mouseSpeed = 0; });
+            track.addEventListener('mousemove', (e) => {
+                if (mouseControlled && !fullscreenOpen) {
+                    const centerX = window.innerWidth / 2;
+                    const deadZone = 150; // pixels from center = no movement
+                    const dist = e.clientX - centerX;
+
+                    // Dead zone in the middle
+                    if (Math.abs(dist) < deadZone) {
+                        mouseSpeed = 0;
+                    } else {
+                        // Inverted: mouse left pulls content right (towards you), mouse right pulls left
+                        const adjustedDist = dist > 0 ? dist - deadZone : dist + deadZone;
+                        mouseSpeed = -(adjustedDist / ((window.innerWidth / 2) - deadZone)) * 12;
+                    }
+                }
+            });
+
+            // Touch support for mobile
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let isSwiping = false;
+
+            track.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                isSwiping = true;
+                mouseControlled = true;
+            }, { passive: true });
+
+            track.addEventListener('touchmove', (e) => {
+                if (!isSwiping || fullscreenOpen) return;
+
+                const touchX = e.touches[0].clientX;
+                const touchY = e.touches[0].clientY;
+                const deltaX = touchX - touchStartX;
+                const deltaY = touchY - touchStartY;
+
+                // Only control horizontal scroll if mostly horizontal swipe
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    // Swipe right = positive deltaX = scroll left (content moves right)
+                    // Swipe left = negative deltaX = scroll right (content moves left)
+                    mouseSpeed = deltaX * 0.15;
+                }
+
+                touchStartX = touchX;
+                touchStartY = touchY;
+            }, { passive: true });
+
+            track.addEventListener('touchend', () => {
+                isSwiping = false;
+                mouseControlled = false;
+                mouseSpeed = 0;
+            }, { passive: true });
+
+            function animate() {
+                // Cache track reference
+                if (!animCachedTrack) animCachedTrack = document.getElementById('scrollTrack');
+                if (!animCachedTrack || allGifs.length === 0) {
+                    requestAnimationFrame(animate);
+                    return;
+                }
+
+                // Pause scrolling when fullscreen is open
+                if (!fullscreenOpen) {
+                    if (dopamineMode) {
+                        // Dopamine Rush: alternating rows scrolling left/right
+                        const numRows = Math.ceil((window.innerHeight - 65) / 180);
+
+                        // Re-cache rows if count changed (new rows added)
+                        if (numRows !== animLastRowCount) {
+                            animCachedRows = [];
+                            for (let r = 0; r < numRows; r++) {
+                                animCachedRows[r] = document.getElementById('dopRow' + r);
+                            }
+                            animLastRowCount = numRows;
+                        }
+
+                        const baseSpeed = Math.abs(autoSpeed) * 1.5;
+
+                        for (let r = 0; r < numRows; r++) {
+                            const row = animCachedRows[r];
+                            if (row) {
+                                const maxScroll = row.scrollWidth / 3;
+
+                                // Initialize position if needed
+                                if (rowScrollPos[r] === undefined) rowScrollPos[r] = 0;
+
+                                // Alternate direction: even rows go right (positive), odd rows go left (negative)
+                                const direction = r % 2 === 0 ? 1 : -1;
+                                // Vary speed slightly per row
+                                const speed = baseSpeed * (0.8 + (r % 3) * 0.2);
+
+                                rowScrollPos[r] += speed * direction;
+
+                                // Wrap around
+                                if (rowScrollPos[r] > 0) rowScrollPos[r] = -maxScroll;
+                                if (rowScrollPos[r] < -maxScroll) rowScrollPos[r] = 0;
+
+                                // Use translate3d for GPU acceleration
+                                row.style.transform = `translate3d(${rowScrollPos[r]}px, 0, 0)`;
+                            }
+                        }
+                    } else {
+                        // Normal single row mode
+                        const maxScroll = animCachedTrack.scrollWidth / 2;
+                        const speed = mouseControlled ? mouseSpeed : autoSpeed;
+
+                        scrollPos += speed;
+                        if (scrollPos > 0) scrollPos = -maxScroll;
+                        if (scrollPos < -maxScroll) scrollPos = 0;
+
+                        // Use translate3d for GPU acceleration
+                        animCachedTrack.style.transform = `translate3d(${scrollPos}px, 0, 0)`;
+                    }
+                }
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeFullscreen();
+                closeModal();
+                document.getElementById('filterPanel').classList.remove('active');
+            }
+        });
+
+        // Filter system
+        function toggleFilters() {
+            document.getElementById('filterPanel').classList.toggle('active');
+            document.getElementById('settingsPanel').classList.remove('active');
+            renderFilterTags();
+        }
+
+        function renderFilterTags() {
+            const container = document.getElementById('filterTags');
+            container.innerHTML = allSearchTerms.map(term => `
+                <span class="filter-tag ${searchTerms.includes(term) ? 'active' : ''}"
+                      onclick="toggleFilter('${term}')">${term}</span>
+            `).join('');
+            document.getElementById('filterCount').textContent = searchTerms.length === 0
+                ? 'Random art mode'
+                : `${searchTerms.length} filters active`;
+        }
+
+        function toggleFilter(term) {
+            if (searchTerms.includes(term)) {
+                searchTerms = searchTerms.filter(t => t !== term);
+            } else {
+                searchTerms.push(term);
+            }
+            renderFilterTags();
+            scheduleReload(800);
+        }
+
+        function applyPreset(preset) {
+            searchTerms = [...presets[preset]];
+            renderFilterTags();
+            scheduleReload(500);
+        }
+
+        function clearAllFilters() {
+            searchTerms = [];
+            renderFilterTags();
+            scheduleReload(500);
+        }
+
+        // objkt.com artist filter functions
+        function setObjktArtist() {
+            const input = document.getElementById('objktArtistInput');
+            const status = document.getElementById('objktArtistStatus');
+            const value = input.value.trim();
+
+            if (value) {
+                objktArtistHandle = value;
+                status.textContent = `Filtering by: ${value}`;
+                status.style.color = '#ff006e';
+                // Enable objkt source if not already
+                sourcesEnabled.objkt = true;
+                renderSourceToggles();
+                scheduleReload(500);
+            } else {
+                status.textContent = 'Enter a wallet address or alias';
+                status.style.color = '#888';
+            }
+        }
+
+        function clearObjktArtist() {
+            const input = document.getElementById('objktArtistInput');
+            const status = document.getElementById('objktArtistStatus');
+            objktArtistHandle = '';
+            input.value = '';
+            status.textContent = 'Cleared - showing all artists';
+            status.style.color = '#8338ec';
+            scheduleReload(500);
+        }
+
+        // GLITCH ONLY preset - turns off non-glitch sources, applies glitch filters
+        function applyGlitchOnly() {
+            // Turn off general/stock sources
+            sourcesEnabled.pexels = false;
+            sourcesEnabled.pixabay = false;
+            sourcesEnabled.nasa = false;
+            sourcesEnabled.wikipedia = false;
+            sourcesEnabled.archive = false;
+            // Keep glitch-friendly sources on
+            sourcesEnabled.tenor = true;
+            sourcesEnabled.giphy = true;
+            sourcesEnabled.reddit = true;
+            sourcesEnabled.objkt = true;
+            sourcesEnabled.deviantart = true;
+            sourcesEnabled.tumblr = true;
+            sourcesEnabled.bluesky = true;
+            // Apply glitch filters
+            searchTerms = [...presets.glitch];
+            // Update UI
+            renderSourceToggles();
+            renderSourceControls();
+            renderFilterTags();
+            scheduleReload(500);
+        }
+
+        // Public Domain preset - NASA, Wikipedia, Archive, Pixabay only
+        function applyPublicDomain() {
+            // Turn off non-public-domain sources
+            Object.keys(sourcesEnabled).forEach(s => sourcesEnabled[s] = false);
+            // Enable public domain sources
+            sourcesEnabled.nasa = true;
+            sourcesEnabled.wikipedia = true;
+            sourcesEnabled.archive = true;
+            sourcesEnabled.pexels = true; // Pexels is free to use
+            // Clear filters for general content
+            searchTerms = [];
+            // Update UI
+            renderSourceToggles();
+            renderSourceControls();
+            renderFilterTags();
+            scheduleReload(500);
+        }
+
+        const sourceNames = {
+            tenor: 'Tenor', giphy: 'Giphy', reddit: 'Reddit', tumblr: 'Tumblr',
+            bluesky: 'Bluesky', deviantart: 'DeviantArt', archive: 'Archive.org',
+            wikipedia: 'Wikipedia', objkt: 'objkt', exchange: 'Exchange.art',
+            mallow: 'mallow.art', foster: 'Foster', pexels: 'Pexels',
+            pixabay: 'Pixabay', nasa: 'NASA'
+        };
+
+        function renderSourceToggles() {
+            const container = document.getElementById('sourceToggles');
+            container.innerHTML = Object.keys(sourcesEnabled).map(source => `
+                <span class="filter-tag ${sourcesEnabled[source] ? 'active' : ''}" onclick="toggleSource('${source}')">${sourceNames[source]}</span>
+            `).join('');
+        }
+
+        function renderSourceControls() {
+            const container = document.getElementById('sourceControls');
+            container.innerHTML = Object.keys(sourcesEnabled).map(source => `
+                <div class="source-control ${sourcesEnabled[source] ? '' : 'disabled'}" id="ctrl_${source}">
+                    <span class="source-name ${sourcesEnabled[source] ? '' : 'off'}">${sourceNames[source]}</span>
+                    <input type="range" class="source-weight" min="0" max="3" step="0.5" value="${sourceWeights[source]}"
+                           oninput="updateWeight('${source}', this.value)">
+                    <span class="weight-val" id="weight_${source}">${sourceWeights[source]}x</span>
+                </div>
+            `).join('');
+        }
+
+        let reloadTimeout = null;
+
+        function scheduleReload(delay = 500) {
+            clearTimeout(reloadTimeout);
+            const indicator = document.getElementById('reloadIndicator');
+            if (indicator) indicator.style.display = 'inline';
+            reloadTimeout = setTimeout(() => {
+                if (indicator) indicator.style.display = 'none';
+                applyFilters();
+            }, delay);
+        }
+
+        function toggleSource(source) {
+            sourcesEnabled[source] = !sourcesEnabled[source];
+            renderSourceToggles();
+            renderSourceControls();
+            scheduleReload(500);
+        }
+
+        function toggleSettings() {
+            document.getElementById('settingsPanel').classList.toggle('active');
+            document.getElementById('filterPanel').classList.remove('active');
+        }
+
+        function updateScrollSpeed(value) {
+            autoSpeed = -parseFloat(value);
+            document.getElementById('scrollSpeedVal').textContent = value + 'x';
+        }
+
+        function updateCardSize(value) {
+            cardSize = parseInt(value);
+            document.getElementById('cardSizeVal').textContent = value + 'px';
+            renderGallery(); // Auto-apply
+        }
+
+        async function toggleDopamineMode() {
+            dopamineMode = !dopamineMode;
+            const btn = document.getElementById('dopamineBtn');
+            const track = document.getElementById('scrollTrack');
+
+            // Clear animation cache when toggling mode
+            animCachedRows = [];
+            animLastRowCount = 0;
+
+            if (dopamineMode) {
+                btn.style.background = '#ff006e';
+                btn.textContent = 'DOPAMINE RUSH (ON)';
+
+                // Show loading screen for dopamine mode initial load
+                if (allGifs.length < 100) {
+                    resetLoadingProgress();
+                    showLoading(true, 'ACTIVATING DOPAMINE RUSH...');
+                    updateLoadingProgress(10);
+
+                    // Load more content for dopamine mode
+                    await loadMoreForDopamineWithProgress();
+
+                    showLoading(false);
+                }
+
+                // Start auto-refresh every 30 seconds to pull new content
+                dopamineRefreshInterval = setInterval(() => {
+                    console.log('Dopamine refresh: loading new content...');
+                    loadMoreForDopamine();
+                }, 30000);
+            } else {
+                btn.style.background = '#333';
+                btn.textContent = 'DOPAMINE RUSH';
+                // Stop auto-refresh
+                if (dopamineRefreshInterval) {
+                    clearInterval(dopamineRefreshInterval);
+                    dopamineRefreshInterval = null;
+                }
+                // Reset track display and transform when exiting dopamine mode
+                if (track) {
+                    track.style.display = '';
+                    track.style.transform = '';
+                }
+            }
+            // Reset all scroll positions
+            rowScrollPos = [];
+            scrollPos = 0;
+            renderGallery(); // Auto-apply
+        }
+
+        // Load more content for dopamine mode without full reload
+        async function loadMoreForDopamine() {
+            if (!dopamineMode) return;
+
+            const oldCount = allGifs.length;
+
+            // Fetch from a few random sources to add variety
+            const quickFetches = [];
+
+            // Random Tenor searches (multiple terms for more variety)
+            if (sourcesEnabled.tenor) {
+                const randomTerms = ['art', 'loop', 'trippy', 'neon', 'abstract', 'psychedelic', 'weird', 'crazy', 'glitch', 'aesthetic', 'surreal', 'hypnotic'];
+                // Fetch 2 different random terms
+                for (let i = 0; i < 2; i++) {
+                    const term = randomTerms[Math.floor(Math.random() * randomTerms.length)];
+                    quickFetches.push(
+                        fetch(`https://tenor.googleapis.com/v2/search?q=${term}&key=${TENOR_KEY}&limit=40&media_filter=gif&pos=${Math.floor(Math.random() * 200)}`)
+                            .then(r => r.json())
+                            .catch(() => ({ results: [] }))
+                    );
+                }
+            }
+
+            // Random Giphy searches (multiple terms for more variety)
+            if (sourcesEnabled.giphy) {
+                const randomTerms = ['glitch', 'abstract', 'trippy', 'neon', 'retro', 'vaporwave', 'pixel', 'loop', 'animation', 'art', 'digital', 'psychedelic'];
+                // Fetch 2 different random terms
+                for (let i = 0; i < 2; i++) {
+                    const term = randomTerms[Math.floor(Math.random() * randomTerms.length)];
+                    quickFetches.push(
+                        fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${term}&limit=40&offset=${Math.floor(Math.random() * 200)}&rating=r`)
+                            .then(r => r.json())
+                            .catch(() => ({ data: [] }))
+                    );
+                }
+            }
+
+            const results = await Promise.all(quickFetches);
+
+            // Process and add new gifs
+            results.forEach(data => {
+                if (data.results) {
+                    // Tenor
+                    data.results.forEach(item => {
+                        const id = 'tenor_' + item.id + '_' + Date.now();
+                        if (!allGifs.some(g => g.id.startsWith('tenor_' + item.id))) {
+                            allGifs.push({
+                                id,
+                                title: item.content_description || 'Untitled',
+                                username: item.itemurl ? new URL(item.itemurl).pathname.split('/')[1] : 'Unknown',
+                                tags: item.tags || [],
+                                source: 'Tenor',
+                                images: {
+                                    fixed_height: { url: item.media_formats?.gif?.url || item.media_formats?.tinygif?.url },
+                                    original: { url: item.media_formats?.gif?.url }
+                                }
+                            });
+                        }
+                    });
+                }
+                if (data.data && Array.isArray(data.data)) {
+                    // Giphy
+                    data.data.forEach(item => {
+                        const id = 'giphy_' + item.id + '_' + Date.now();
+                        if (!allGifs.some(g => g.id.startsWith('giphy_' + item.id))) {
+                            allGifs.push({
+                                id,
+                                title: item.title || 'Untitled',
+                                username: item.username || item.user?.username || 'Unknown',
+                                tags: item.tags || [],
+                                source: 'Giphy',
+                                images: {
+                                    fixed_height: { url: item.images?.fixed_height?.url },
+                                    original: { url: item.images?.original?.url }
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
+            // Shuffle to mix new content in
+            allGifs.sort(() => Math.random() - 0.5);
+
+            console.log(`Added ${allGifs.length - oldCount} new items, total: ${allGifs.length}`);
+
+            // Seamlessly add new content to existing rows instead of full re-render
+            if (dopamineMode) {
+                appendToDopamineRows();
+            }
+        }
+
+        // Seamlessly append new cards to dopamine mode rows without clearing view
+        function appendToDopamineRows() {
+            const numRows = document.querySelectorAll('.dopamine-row').length;
+            if (numRows === 0) {
+                // First time or rows don't exist, do full render
+                renderGallery();
+                return;
+            }
+
+            // Shuffle new content
+            const shuffled = [...allGifs].sort(() => Math.random() - 0.5);
+            const gifsPerRowPool = Math.floor(shuffled.length / numRows);
+            const itemsToAdd = 15; // Add this many per row
+
+            for (let r = 0; r < numRows; r++) {
+                const row = document.getElementById(`dopRow${r}`);
+                if (!row) continue;
+
+                // Get unique pool for this row
+                const startIdx = r * gifsPerRowPool;
+                const rowPool = shuffled.slice(startIdx, startIdx + gifsPerRowPool);
+
+                // Create new cards from random items in the pool
+                let newCardsHtml = '';
+                for (let i = 0; i < itemsToAdd; i++) {
+                    const gif = rowPool[Math.floor(Math.random() * rowPool.length)];
+                    const idx = allGifs.indexOf(gif);
+                    const url = gif.images?.fixed_height?.url || gif.images?.original?.url;
+                    const title = gif.title || 'Untitled';
+                    const user = gif.username || gif.user?.username || 'Unknown';
+                    const source = gif.source || '';
+                    const tags = gif.tags || [];
+                    const firstTag = tags.length > 0 ? tags[0] : '';
+
+                    newCardsHtml += `
+                        <div class="art-card" style="width:${cardSize}px;" onclick="openFullscreen(${idx})">
+                            <div class="art-media" style="height:${cardSize}px;">
+                                <img src="${url}" alt="${title}" loading="lazy">
+                            </div>
+                            <button class="bookmark-btn ${isBookmarked(gif.id) ? 'saved' : ''}"
+                                    onclick="event.stopPropagation(); toggleBookmark(${idx})">
+                                ${isBookmarked(gif.id) ? '★' : '☆'}
+                            </button>
+                            <div class="art-info">
+                                <div><span style="color:#8338ec;">${source}</span></div>
+                                <div style="color:#fff;">${user}</div>
+                                ${firstTag ? `<div style="color:#3a86ff;font-size:0.7rem;">#${firstTag}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Append to end of row
+                row.insertAdjacentHTML('beforeend', newCardsHtml);
+            }
+
+            // Update duplicate timing estimate
+            updateDuplicateTiming();
+        }
+
+        // Calculate and display when user might see duplicates
+        function updateDuplicateTiming() {
+            const numRows = document.querySelectorAll('.dopamine-row').length;
+            if (numRows === 0) return;
+
+            // Get first row to calculate
+            const firstRow = document.getElementById('dopRow0');
+            if (!firstRow) return;
+
+            const cardsInRow = firstRow.querySelectorAll('.art-card').length;
+            const avgCardWidth = cardSize + 12; // Include gap
+            const rowWidth = cardsInRow * avgCardWidth;
+            const viewportWidth = window.innerWidth;
+
+            // Speed is roughly autoSpeed * 60 (frames per sec) pixels per second
+            const pixelsPerSecond = autoSpeed * 60;
+
+            // Time to scroll through all cards before seeing duplicates
+            const secondsUntilLoop = rowWidth / pixelsPerSecond;
+            const minutesUntilLoop = Math.floor(secondsUntilLoop / 60);
+
+            // Display estimate in console (could add UI indicator if desired)
+            console.log(`Dopamine mode: ~${cardsInRow} cards per row, ~${minutesUntilLoop}min until potential duplicates at current speed`);
+        }
+
+        // Load content for dopamine mode with progress tracking (used on initial activation)
+        async function loadMoreForDopamineWithProgress() {
+            const oldCount = allGifs.length;
+
+            updateLoadingStatus('GATHERING DOPAMINE FEEDS...');
+            updateLoadingProgress(20);
+
+            // Collect all fetch promises
+            const quickFetches = [];
+            let totalFetches = 0;
+
+            // Random Tenor searches (multiple terms for more variety)
+            if (sourcesEnabled.tenor) {
+                const randomTerms = ['art', 'loop', 'trippy', 'neon', 'abstract', 'psychedelic', 'weird', 'crazy', 'glitch', 'aesthetic', 'surreal', 'hypnotic'];
+                for (let i = 0; i < 3; i++) {
+                    const term = randomTerms[Math.floor(Math.random() * randomTerms.length)];
+                    quickFetches.push(
+                        fetch(`https://tenor.googleapis.com/v2/search?q=${term}&key=${TENOR_KEY}&limit=50&media_filter=gif&pos=${Math.floor(Math.random() * 200)}`)
+                            .then(r => r.json())
+                            .catch(() => ({ results: [] }))
+                    );
+                    totalFetches++;
+                }
+            }
+
+            // Random Giphy searches (multiple terms for more variety)
+            if (sourcesEnabled.giphy) {
+                const randomTerms = ['glitch', 'abstract', 'trippy', 'neon', 'retro', 'vaporwave', 'pixel', 'loop', 'animation', 'art', 'digital', 'psychedelic'];
+                for (let i = 0; i < 3; i++) {
+                    const term = randomTerms[Math.floor(Math.random() * randomTerms.length)];
+                    quickFetches.push(
+                        fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${term}&limit=50&offset=${Math.floor(Math.random() * 200)}&rating=r`)
+                            .then(r => r.json())
+                            .catch(() => ({ data: [] }))
+                    );
+                    totalFetches++;
+                }
+            }
+
+            updateLoadingStatus('FETCHING ' + totalFetches + ' FEEDS...');
+            updateLoadingProgress(40);
+
+            const results = await Promise.all(quickFetches);
+
+            updateLoadingStatus('PROCESSING DOPAMINE CONTENT...');
+            updateLoadingProgress(70);
+
+            // Process and add new gifs
+            results.forEach((data, index) => {
+                const progress = 70 + Math.round((index / results.length) * 20);
+                updateLoadingProgress(progress);
+
+                if (data.results) {
+                    // Tenor
+                    data.results.forEach(item => {
+                        const id = 'tenor_' + item.id + '_' + Date.now();
+                        if (!allGifs.some(g => g.id.startsWith('tenor_' + item.id))) {
+                            allGifs.push({
+                                id,
+                                title: item.content_description || 'Untitled',
+                                username: item.itemurl ? new URL(item.itemurl).pathname.split('/')[1] : 'Unknown',
+                                tags: item.tags || [],
+                                source: 'Tenor',
+                                images: {
+                                    fixed_height: { url: item.media_formats?.gif?.url || item.media_formats?.tinygif?.url },
+                                    original: { url: item.media_formats?.gif?.url }
+                                }
+                            });
+                        }
+                    });
+                }
+                if (data.data && Array.isArray(data.data)) {
+                    // Giphy
+                    data.data.forEach(item => {
+                        const id = 'giphy_' + item.id + '_' + Date.now();
+                        if (!allGifs.some(g => g.id.startsWith('giphy_' + item.id))) {
+                            allGifs.push({
+                                id,
+                                title: item.title || 'Untitled',
+                                username: item.username || item.user?.username || 'Unknown',
+                                tags: item.tags || [],
+                                source: 'Giphy',
+                                images: {
+                                    fixed_height: { url: item.images?.fixed_height?.url },
+                                    original: { url: item.images?.original?.url }
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
+            // Shuffle to mix new content in
+            allGifs.sort(() => Math.random() - 0.5);
+
+            updateLoadingStatus('LOADED ' + (allGifs.length - oldCount) + ' NEW ARTWORKS');
+            updateLoadingProgress(100);
+
+            console.log(`Dopamine boost: Added ${allGifs.length - oldCount} new items, total: ${allGifs.length}`);
+        }
+
+        function updateWeight(source, value) {
+            sourceWeights[source] = parseFloat(value);
+            document.getElementById('weight_' + source).textContent = value + 'x';
+        }
+
+        function allSourcesOn() {
+            Object.keys(sourcesEnabled).forEach(s => sourcesEnabled[s] = true);
+            renderSourceToggles();
+            renderSourceControls();
+            scheduleReload(500);
+        }
+
+        function allSourcesOff() {
+            Object.keys(sourcesEnabled).forEach(s => sourcesEnabled[s] = false);
+            renderSourceToggles();
+            renderSourceControls();
+            scheduleReload(500);
+        }
+
+        function toggleRedditSub(sub) {
+            if (redditSubs.includes(sub)) {
+                redditSubs = redditSubs.filter(s => s !== sub);
+            } else {
+                redditSubs.push(sub);
+            }
+            renderRedditTags();
+            scheduleReload(800);
+        }
+
+        function renderRedditTags() {
+            const container = document.getElementById('redditTags');
+            container.innerHTML = allRedditSubs.map(sub => `
+                <span class="filter-tag ${redditSubs.includes(sub) ? 'active' : ''}"
+                      onclick="toggleRedditSub('${sub}')">r/${sub}</span>
+            `).join('');
+        }
+
+        function renderArtistTags() {
+            const container = document.getElementById('artistTags');
+            if (!container) return;
+            container.innerHTML = allArtists.map(artist => `
+                <span class="filter-tag ${selectedArtists.includes(artist) ? 'active' : ''}"
+                      onclick="toggleArtist('${artist.replace(/'/g, "\\'")}')">${artist}</span>
+            `).join('');
+        }
+
+        function toggleArtist(artist) {
+            if (selectedArtists.includes(artist)) {
+                selectedArtists = selectedArtists.filter(a => a !== artist);
+            } else {
+                selectedArtists.push(artist);
+            }
+            renderArtistTags();
+            scheduleReload(800);
+        }
+
+        function allArtistsOn() {
+            selectedArtists = [...allArtists];
+            renderArtistTags();
+            scheduleReload(500);
+        }
+
+        function allArtistsOff() {
+            selectedArtists = [];
+            renderArtistTags();
+            scheduleReload(500);
+        }
+
+        function addCustomFilter() {
+            const input = document.getElementById('customFilter');
+            const term = input.value.trim();
+            if (term && !allSearchTerms.includes(term)) {
+                allSearchTerms.push(term);
+                searchTerms.push(term);
+            } else if (term && !searchTerms.includes(term)) {
+                searchTerms.push(term);
+            }
+            input.value = '';
+            renderFilterTags();
+        }
+
+        function applyFilters() {
+            document.getElementById('filterPanel').classList.remove('active');
+            allGifs = [];
+            scrollPos = 0;
+            document.getElementById('scrollTrack').innerHTML = '<div class="loading">Loading glitch art...</div>';
+            loadGifs();
+        }
+
+        // Init
+        updateSavedCount();
+        setupScroll();
+        renderSourceToggles();
+        renderSourceControls();
+        renderFilterTags();
+        renderArtistTags();
+        renderRedditTags();
+        loadGifs();
+    </script>
+</body>
+</html>
