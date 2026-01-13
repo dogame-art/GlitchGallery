@@ -251,12 +251,79 @@
             color: #fff;
             box-shadow: 0 0 25px rgba(131,56,236,0.4), inset 0 0 15px rgba(255,0,110,0.1);
         }
-        .music-btn.playing {
-            background: linear-gradient(135deg, rgba(58,134,255,0.2), rgba(131,56,236,0.3));
+        /* Music Player - Expandable Pill */
+        .music-player {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 25px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .music-player:hover {
+            border-color: rgba(58,134,255,0.5);
+            box-shadow: 0 0 15px rgba(58,134,255,0.2);
+        }
+        .music-player.playing {
             border-color: rgba(58,134,255,0.6);
-            color: #fff;
-            box-shadow: 0 0 25px rgba(58,134,255,0.4);
             animation: music-pulse 2s ease-in-out infinite;
+        }
+        .music-main-btn {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.8);
+            padding: 10px 14px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+        .music-main-btn:hover {
+            color: #fff;
+        }
+        .music-controls {
+            display: flex;
+            align-items: center;
+            max-width: 0;
+            overflow: hidden;
+            transition: max-width 0.3s ease, padding 0.3s ease;
+            padding: 0;
+        }
+        .music-player:hover .music-controls {
+            max-width: 200px;
+            padding-right: 10px;
+        }
+        .music-ctrl-btn {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.6);
+            padding: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            border-radius: 50%;
+        }
+        .music-ctrl-btn:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.1);
+        }
+        .music-volume {
+            width: 60px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        .music-volume::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #3a86ff;
+            border-radius: 50%;
+            cursor: pointer;
         }
         @keyframes music-pulse {
             0%, 100% { box-shadow: 0 0 15px rgba(58,134,255,0.3); }
@@ -1137,7 +1204,13 @@
             <button class="filter-toggle" onclick="toggleSettings()">Settings</button>
             <button class="sfw-btn sfw-active" id="sfwBtn" onclick="toggleSfwMode()" title="Toggle Safe For Work / NSFW content">SFW</button>
             <button class="seizure-safe-btn" id="seizureSafeBtn" onclick="toggleSeizureSafe()" title="Reduces flashing, shows static images, filters strobe content">Seizure Safe</button>
-            <button class="nav-btn music-btn" id="musicBtn" onclick="toggleMusic()" title="Toggle lofi music">🎵 Lofi</button>
+            <div class="music-player" id="musicPlayer">
+                <button class="music-main-btn" id="musicBtn" onclick="toggleMusic()" title="Toggle lofi music">🎵 Lofi</button>
+                <div class="music-controls">
+                    <button class="music-ctrl-btn" onclick="stopMusic()" title="Stop">⏹️</button>
+                    <input type="range" class="music-volume" id="musicVolume" min="0" max="100" value="30" onchange="setMusicVolume(this.value)" title="Volume">
+                </div>
+            </div>
         </div>
     </header>
 
@@ -3668,26 +3741,45 @@
 
         // Lofi Music Player
         let musicPlaying = false;
+
         function toggleMusic() {
             const player = document.getElementById('lofiPlayer');
             const btn = document.getElementById('musicBtn');
+            const container = document.getElementById('musicPlayer');
 
             if (musicPlaying) {
                 player.pause();
-                btn.classList.remove('playing');
+                container.classList.remove('playing');
                 btn.textContent = '🎵 Lofi';
                 musicPlaying = false;
             } else {
-                player.volume = 0.3; // Start at 30% volume
+                const volume = document.getElementById('musicVolume').value / 100;
+                player.volume = volume;
                 player.play().then(() => {
-                    btn.classList.add('playing');
-                    btn.textContent = '🎵 Playing';
+                    container.classList.add('playing');
+                    btn.textContent = '▶️ Playing';
                     musicPlaying = true;
                 }).catch(err => {
                     console.log('Music autoplay blocked - user interaction required');
-                    // Try again on next click
                 });
             }
+        }
+
+        function stopMusic() {
+            const player = document.getElementById('lofiPlayer');
+            const btn = document.getElementById('musicBtn');
+            const container = document.getElementById('musicPlayer');
+
+            player.pause();
+            player.currentTime = 0;
+            container.classList.remove('playing');
+            btn.textContent = '🎵 Lofi';
+            musicPlaying = false;
+        }
+
+        function setMusicVolume(value) {
+            const player = document.getElementById('lofiPlayer');
+            player.volume = value / 100;
         }
 
         // Check if content has flash-related tags
