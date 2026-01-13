@@ -2287,35 +2287,50 @@
                 `;
             }
 
+            // First, deduplicate by URL to remove exact duplicates
+            function deduplicateByUrl(gifs) {
+                const seen = new Set();
+                return gifs.filter(gif => {
+                    const url = gif.images?.fixed_height?.url || gif.images?.original?.url;
+                    if (!url || seen.has(url)) return false;
+                    seen.add(url);
+                    return true;
+                });
+            }
+
             // Smart shuffle: spread out same artists and prevent adjacent duplicates
             function smartShuffle(gifs) {
-                if (gifs.length < 2) return gifs;
+                // First remove exact URL duplicates
+                const uniqueGifs = deduplicateByUrl(gifs);
+                if (uniqueGifs.length < 2) return uniqueGifs;
 
                 const result = [];
-                const remaining = [...gifs];
-                const usedUrls = new Set();
+                const remaining = [...uniqueGifs];
                 const recentArtists = []; // Track last N artists to prevent clustering
+                const recentTitles = []; // Track recent titles to avoid similar content
 
                 while (remaining.length > 0) {
                     let bestIdx = 0;
                     let bestScore = -1;
 
-                    // Find best next item (different from recent artists, not a URL duplicate)
-                    for (let i = 0; i < Math.min(remaining.length, 20); i++) {
+                    // Find best next item (different from recent artists)
+                    for (let i = 0; i < Math.min(remaining.length, 30); i++) {
                         const gif = remaining[i];
-                        const url = gif.images?.fixed_height?.url || gif.images?.original?.url;
                         const artist = gif.username || 'Unknown';
-
-                        // Skip if we've seen this exact URL recently
-                        if (usedUrls.has(url)) continue;
+                        const title = (gif.title || '').toLowerCase().substring(0, 20);
 
                         // Score based on how different this artist is from recent ones
                         let score = 10;
                         const artistIdx = recentArtists.indexOf(artist);
                         if (artistIdx === -1) {
-                            score += 5; // Bonus for new artist
+                            score += 8; // Big bonus for new artist
                         } else {
-                            score -= (5 - artistIdx); // Penalty based on how recent
+                            score -= (8 - artistIdx); // Penalty based on how recent
+                        }
+
+                        // Penalty for similar titles
+                        if (recentTitles.some(t => t === title || t.includes(title) || title.includes(t))) {
+                            score -= 5;
                         }
 
                         if (score > bestScore) {
@@ -2325,15 +2340,18 @@
                     }
 
                     const selected = remaining.splice(bestIdx, 1)[0];
-                    const selectedUrl = selected.images?.fixed_height?.url || selected.images?.original?.url;
                     const selectedArtist = selected.username || 'Unknown';
+                    const selectedTitle = (selected.title || '').toLowerCase().substring(0, 20);
 
                     result.push(selected);
-                    usedUrls.add(selectedUrl);
 
-                    // Track recent artists (keep last 5)
+                    // Track recent artists (keep last 8)
                     recentArtists.unshift(selectedArtist);
-                    if (recentArtists.length > 5) recentArtists.pop();
+                    if (recentArtists.length > 8) recentArtists.pop();
+
+                    // Track recent titles (keep last 5)
+                    recentTitles.unshift(selectedTitle);
+                    if (recentTitles.length > 5) recentTitles.pop();
                 }
 
                 return result;
@@ -3021,11 +3039,58 @@
 
         // SFW/NSFW Mode - filters adult content
         function toggleSfwMode() {
-            sfwMode = !sfwMode;
-            localStorage.setItem('sfwMode', sfwMode);
+            // If switching TO NSFW mode, show confirmation
+            if (sfwMode) {
+                showNsfwConfirmation();
+            } else {
+                // Switching back to SFW - no confirmation needed
+                sfwMode = true;
+                localStorage.setItem('sfwMode', 'true');
+                applySfwMode();
+                applyFilters();
+            }
+        }
+
+        function showNsfwConfirmation() {
+            const modal = document.createElement('div');
+            modal.id = 'nsfwConfirmModal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:5000;display:flex;justify-content:center;align-items:center;';
+            modal.innerHTML = `
+                <div style="background:#1a1a1a;border:2px solid #ff6464;border-radius:12px;padding:30px;max-width:400px;text-align:center;">
+                    <h3 style="color:#ff6464;margin-bottom:15px;font-size:1.3rem;">NSFW Content Warning</h3>
+                    <p style="color:#ccc;margin-bottom:20px;line-height:1.6;">
+                        Enabling NSFW mode may show content containing:<br>
+                        <strong style="color:#fff;">nudity, adult themes, and explicit material</strong>
+                    </p>
+                    <p style="color:#888;margin-bottom:25px;font-size:0.85rem;">
+                        You must be 18+ years old to view this content.
+                    </p>
+                    <div style="display:flex;gap:15px;justify-content:center;">
+                        <button onclick="confirmNsfw()" style="background:#ff6464;color:#fff;border:none;padding:12px 25px;border-radius:8px;cursor:pointer;font-size:1rem;">
+                            I'm 18+, Continue
+                        </button>
+                        <button onclick="cancelNsfw()" style="background:#333;color:#fff;border:1px solid #555;padding:12px 25px;border-radius:8px;cursor:pointer;font-size:1rem;">
+                            Stay in SFW
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function confirmNsfw() {
+            const modal = document.getElementById('nsfwConfirmModal');
+            if (modal) modal.remove();
+            sfwMode = false;
+            localStorage.setItem('sfwMode', 'false');
             applySfwMode();
-            // Need to reload since API parameters change
             applyFilters();
+        }
+
+        function cancelNsfw() {
+            const modal = document.getElementById('nsfwConfirmModal');
+            if (modal) modal.remove();
+            // Stay in SFW mode - don't change anything
         }
 
         function applySfwMode() {
@@ -3034,12 +3099,12 @@
                 btn.classList.add('sfw-active');
                 btn.classList.remove('nsfw-active');
                 btn.textContent = 'SFW';
-                btn.title = 'Safe For Work mode (click for NSFW)';
+                btn.title = 'Safe For Work mode - click for NSFW (18+)';
             } else {
                 btn.classList.remove('sfw-active');
                 btn.classList.add('nsfw-active');
-                btn.textContent = 'NSFW';
-                btn.title = 'NSFW mode enabled (click for SFW)';
+                btn.textContent = 'NSFW (18+)';
+                btn.title = 'NSFW mode - adult content visible. Click for SFW';
             }
         }
 
