@@ -2126,11 +2126,11 @@
                             let objktAddedCount = 0;
                             tokens.forEach(token => {
                                 try {
-                                    // Convert IPFS URIs to gateway URLs (use cloudflare-ipfs for better reliability)
+                                    // Convert IPFS URIs to gateway URLs
                                     let displayUrl = token.display_uri || token.thumbnail_uri || token.artifact_uri;
                                     if (displayUrl && displayUrl.startsWith('ipfs://')) {
-                                        // Use cloudflare IPFS gateway for better speed and reliability
-                                        displayUrl = displayUrl.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/');
+                                        // Use nftstorage.link - optimized for NFT content
+                                        displayUrl = displayUrl.replace('ipfs://', 'https://nftstorage.link/ipfs/');
                                     }
 
                                     if (displayUrl) {
