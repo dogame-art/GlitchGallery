@@ -1423,6 +1423,7 @@
         // Deduplication tracking
         const seenUrls = new Set(); // Track URLs to prevent duplicate images
         const artistCountMap = new Map(); // Track how many items per artist
+        const sessionSeenObjktPKs = new Set(); // Track objkt tokens shown this session (never clears until page refresh)
 
         // Helper to add gif only if URL not seen before
         function addGifIfUnique(gif) {
@@ -1854,7 +1855,7 @@
 
                         // Create multiple queries for variety
                         const objktPromises = searchTerms.map(searchTerm => {
-                            const randomOffset = Math.floor(Math.random() * 100);  // Random offset for variety
+                            const randomOffset = Math.floor(Math.random() * 2000);  // Large offset for variety
                             const termQuery = `
                                 query GetFilteredArt {
                                     token(
@@ -1910,45 +1911,65 @@
                         // Skip the single query code below
                         objktQuery = null;
                     } else {
-                        // No filters - get recent tokens with random offset for variety
-                        const randomOffset = Math.floor(Math.random() * 200);
-                        objktQuery = `
-                            query GetRecentArt {
-                                token(
-                                    where: {
-                                        artifact_uri: {_is_null: false},
-                                        display_uri: {_is_null: false}
-                                    },
-                                    limit: ${limit},
-                                    offset: ${randomOffset},
-                                    order_by: {timestamp: desc}
-                                ) {
-                                    pk
-                                    name
-                                    mime
-                                    artifact_uri
-                                    display_uri
-                                    thumbnail_uri
-                                    supply
-                                    token_id
-                                    fa_contract
-                                    creators {
-                                        holder {
-                                            address
-                                            alias
+                        // No filters - run 3 parallel queries with different random offsets for maximum variety
+                        // Each query pulls from a different part of objkt's collection
+                        const numQueries = 3;
+                        const queryLimit = Math.ceil(limit / numQueries);
+
+                        const objktPromises = Array.from({length: numQueries}, (_, i) => {
+                            // Use large offset ranges (0-15000) with different seeds for each query
+                            const randomOffset = Math.floor(Math.random() * 15000);
+                            const query = `
+                                query GetRecentArt {
+                                    token(
+                                        where: {
+                                            artifact_uri: {_is_null: false},
+                                            display_uri: {_is_null: false}
+                                        },
+                                        limit: ${queryLimit},
+                                        offset: ${randomOffset},
+                                        order_by: {timestamp: desc}
+                                    ) {
+                                        pk
+                                        name
+                                        mime
+                                        artifact_uri
+                                        display_uri
+                                        thumbnail_uri
+                                        supply
+                                        token_id
+                                        fa_contract
+                                        creators {
+                                            holder {
+                                                address
+                                                alias
+                                            }
                                         }
-                                    }
-                                    listings_active(limit: 1, order_by: {price: asc}) {
-                                        price
-                                        currency {
-                                            symbol
-                                            decimals
+                                        listings_active(limit: 1, order_by: {price: asc}) {
+                                            price
+                                            currency {
+                                                symbol
+                                                decimals
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        `;
-                        console.log('objkt: fetching recent with offset:', randomOffset);
+                            `;
+                            console.log(`objkt: query ${i+1}/${numQueries} with offset:`, randomOffset);
+
+                            return fetch('https://data.objkt.com/v3/graphql', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ query })
+                            })
+                            .then(r => r.ok ? r.json() : { data: { token: [] } })
+                            .then(data => ({ type: 'objkt', data }))
+                            .catch(() => ({ type: 'objkt', data: { data: { token: [] } } }));
+                        });
+
+                        allPromises.push(...objktPromises);
+                        console.log('objkt: created', numQueries, 'parallel queries for variety');
+                        objktQuery = null; // Skip the single query code below
                     }
 
                     // Only run single query if objktQuery was set (not null from multi-query)
@@ -2298,8 +2319,15 @@
                             const tokens = result.data?.data?.token || [];
                             console.log(`objkt returned ${tokens.length} tokens`, result.data);
                             let objktAddedCount = 0;
+                            let objktSessionSkipped = 0;
                             tokens.forEach(token => {
                                 try {
+                                    // Skip tokens we've already shown this session
+                                    if (sessionSeenObjktPKs.has(token.pk)) {
+                                        objktSessionSkipped++;
+                                        return; // Already shown this token
+                                    }
+
                                     // Convert IPFS URIs to gateway URLs
                                     let displayUrl = token.display_uri || token.thumbnail_uri || token.artifact_uri;
                                     if (displayUrl) {
@@ -2365,13 +2393,16 @@
                                             editionDisplay: editionDisplay,
                                             isOneOfOne: isOneOfOne
                                         });
-                                        if (added) objktAddedCount++;
+                                        if (added) {
+                                            objktAddedCount++;
+                                            sessionSeenObjktPKs.add(token.pk); // Track for session deduplication
+                                        }
                                     }
                                 } catch (tokenErr) {
                                     console.error('Error processing objkt token:', tokenErr, token);
                                 }
                             });
-                            console.log(`objkt: added ${objktAddedCount} unique items to gallery`);
+                            console.log(`objkt: added ${objktAddedCount} new items (${objktSessionSkipped} already shown this session, ${sessionSeenObjktPKs.size} total in session)`);
                         } catch (objktErr) {
                             console.error('Error processing objkt results:', objktErr);
                         }
@@ -2860,27 +2891,26 @@
                 container.classList.remove('dopamine-mode');
                 track.style.display = ''; // Reset display style
 
-                // Calculate how many cards fit in viewport + buffer for seamless loop
+                // Calculate how many cards fit in viewport
                 const viewportCards = Math.ceil(window.innerWidth / (cardSize + 12)) + 4;
-                const minCardsNeeded = viewportCards * 3; // 3x viewport for smooth seamless loop
 
                 // Smart shuffle to prevent adjacent duplicates and spread artists
                 const shuffled = smartShuffle([...displayGifs].sort(() => Math.random() - 0.5));
 
-                // Only use as many gifs as needed, then duplicate for seamless loop
-                const sourceGifs = shuffled.length > minCardsNeeded
-                    ? shuffled.slice(0, minCardsNeeded)
-                    : shuffled;
+                // Use all available unique content
+                const sourceGifs = shuffled;
 
-                // Double for seamless loop (but only the subset we need)
-                const gifs = [...sourceGifs, ...sourceGifs];
+                // Only duplicate for seamless CSS loop if we have enough content
+                // that duplicates won't be visible at the same time (need at least 2x viewport)
+                const shouldDuplicate = sourceGifs.length >= viewportCards * 2;
+                const gifs = shouldDuplicate ? [...sourceGifs, ...sourceGifs] : sourceGifs;
 
                 track.innerHTML = gifs.map((gif, i) => {
                     const idx = allGifs.indexOf(gif);
                     return makeCard(gif, idx >= 0 ? idx : i % sourceGifs.length);
                 }).join('');
 
-                console.log(`Non-dopamine mode: Rendering ${gifs.length} cards (${sourceGifs.length} unique) from ${displayGifs.length} available`);
+                console.log(`Non-dopamine mode: Rendering ${gifs.length} cards (${sourceGifs.length} unique, ${shouldDuplicate ? 'looped' : 'no loop'}) from ${displayGifs.length} available`);
             }
         }
 
