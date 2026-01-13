@@ -1103,22 +1103,8 @@
             </div>
         </div>
         <div class="filter-section">
-            <h4>ART WHEEL - Quick Presets</h4>
-            <div class="filter-tags" style="display:flex;flex-wrap:wrap;gap:8px;">
-                <button class="preset-btn" style="background:#8338ec;" onclick="clearAllFilters()">ALL ART</button>
-                <button class="preset-btn" style="background:#ff006e;" onclick="applyCategoryPreset('glitch')">Glitch</button>
-                <button class="preset-btn" style="background:#8b4513;" onclick="applyCategoryPreset('traditional')">Traditional</button>
-                <button class="preset-btn" style="background:#3a86ff;" onclick="applyCategoryPreset('digital')">Digital</button>
-                <button class="preset-btn" style="background:#00ff88;color:#000;" onclick="applyCategoryPreset('pixel')">Pixel</button>
-                <button class="preset-btn" style="background:#ff8c00;" onclick="applyCategoryPreset('animation')">Animation</button>
-                <button class="preset-btn" style="background:#ff6b6b;" onclick="applyCategoryPreset('threeD')">3D/Blender</button>
-                <button class="preset-btn" style="background:#9b59b6;" onclick="applyCategoryPreset('ai')">AI Art</button>
-                <button class="preset-btn" style="background:#8338ec;" onclick="applyCategoryPreset('nft')">NFT</button>
-                <button class="preset-btn" style="background:#2ecc71;" onclick="applyCategoryPreset('photography')">Photo</button>
-                <button class="preset-btn" style="background:#e91e63;" onclick="applyCategoryPreset('aesthetic')">Aesthetic</button>
-                <button class="preset-btn" style="background:#00bcd4;" onclick="applyCategoryPreset('abstract')">Abstract</button>
-                <button class="preset-btn" style="background:#333;" onclick="applyPublicDomain()">Public Domain</button>
-            </div>
+            <h4>ART WHEEL - Quick Presets <span id="activePresetIndicator" style="color:#2ecc71;font-size:0.8rem;"></span></h4>
+            <div class="filter-tags" id="artWheelContainer" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
         </div>
         <div class="filter-section">
             <h4>MY SAVED PRESETS
@@ -1430,15 +1416,21 @@
         // Active search terms (start empty for ALL art - uses wildcard search)
         let searchTerms = [];
 
-        function showLoading(show = true, status = 'INITIALIZING FEEDS...') {
+        function showLoading(show = true, status = null) {
             const screen = document.getElementById('loadingScreen');
             const statusEl = document.getElementById('loadingStatus');
             if (screen) {
                 if (show) {
                     screen.classList.remove('hidden');
                     screen.style.display = 'flex';
+                    // Start cycling through random phrases
+                    startRandomLoadingPhrases();
+                    // Set initial phrase
+                    if (statusEl) statusEl.textContent = status || getRandomLoadingPhrase();
                 } else {
                     screen.classList.add('hidden');
+                    // Stop the phrase cycling
+                    stopRandomLoadingPhrases();
                     // Remove from DOM after fade animation
                     setTimeout(() => {
                         if (screen.classList.contains('hidden')) {
@@ -1447,14 +1439,81 @@
                     }, 500);
                 }
             }
-            if (statusEl && status) {
-                statusEl.textContent = status;
-            }
+        }
+
+        // Fun random loading phrases
+        const loadingPhrases = [
+            // Tech/Art humor
+            'DOWNLOADING MORE RAM...',
+            'CONSULTING THE PIXELS...',
+            'ASKING THE INTERNET NICELY...',
+            'BRIBING THE SERVERS...',
+            'RETICULATING SPLINES...',
+            'CALIBRATING CHAOS...',
+            'DEFRAGMENTING CREATIVITY...',
+            'COMPILING VIBES...',
+            'RENDERING EMOTIONS...',
+            'BUFFERING AESTHETICS...',
+            // Random nonsense
+            'SUMMONING THE ART DEMONS...',
+            'CONVINCING ELECTRONS TO COOPERATE...',
+            'TEACHING AI ABOUT FEELINGS...',
+            'ASKING A WIZARD FOR HELP...',
+            'DIVIDING BY ZERO...',
+            'REVERSING ENTROPY...',
+            'QUANTUM TUNNELING...',
+            'HACKING THE MAINFRAME...',
+            'UPLOADING TO THE CLOUD (THE ACTUAL SKY)...',
+            'CHECKING IF ART EXISTS...',
+            // Gen Z/Internet culture
+            'NO THOUGHTS JUST VIBES...',
+            'DOING A LITTLE TROLLING...',
+            'IT\'S GIVING... LOADING...',
+            'SLAY MOMENT INCOMING...',
+            'VERY DEMURE, VERY MINDFUL...',
+            'THIS IS GIVING MAIN CHARACTER ENERGY...',
+            // Out of context
+            'THE MITOCHONDRIA IS THE POWERHOUSE...',
+            'CALL THAT A KNIFE?...',
+            'ANYWAY, HERE\'S WONDERWALL...',
+            'I SHOULD BUY A BOAT...',
+            'INSTRUCTIONS UNCLEAR...',
+            'BUT WAIT, THERE\'S MORE...',
+            'LET ME COOK...',
+            'TRUST THE PROCESS...',
+            'LOADING LOADING LOADING...',
+            'ALMOST THERE... PROBABLY...',
+            // Art specific
+            'STEALING FROM MUSEUMS...',
+            'ASKING PICASSO FOR TIPS...',
+            'MAKING BOB ROSS PROUD...',
+            'FINDING THE HAPPY LITTLE TREES...',
+            'CHANNELING PURE CHAOS...'
+        ];
+
+        function getRandomLoadingPhrase() {
+            return loadingPhrases[Math.floor(Math.random() * loadingPhrases.length)];
         }
 
         function updateLoadingStatus(status) {
             const statusEl = document.getElementById('loadingStatus');
-            if (statusEl) statusEl.textContent = status;
+            if (statusEl) statusEl.textContent = status || getRandomLoadingPhrase();
+        }
+
+        // Cycle through random phrases during loading
+        let loadingPhraseInterval = null;
+        function startRandomLoadingPhrases() {
+            if (loadingPhraseInterval) clearInterval(loadingPhraseInterval);
+            loadingPhraseInterval = setInterval(() => {
+                const statusEl = document.getElementById('loadingStatus');
+                if (statusEl) statusEl.textContent = getRandomLoadingPhrase();
+            }, 1500);
+        }
+        function stopRandomLoadingPhrases() {
+            if (loadingPhraseInterval) {
+                clearInterval(loadingPhraseInterval);
+                loadingPhraseInterval = null;
+            }
         }
 
         function updateLoadingProgress(percent) {
@@ -2992,17 +3051,66 @@
 
         function clearAllFilters() {
             searchTerms = [];
+            activePreset = 'all';
             renderFilterTags();
+            renderArtWheel();
             applyFilters(); // Random art auto-applies
         }
+
+        // Track which preset is currently active
+        let activePreset = 'all'; // 'all' means no filters (random art)
 
         // Apply a category preset from the Art Wheel
         function applyCategoryPreset(categoryKey) {
             const category = filterCategories[categoryKey];
             if (!category) return;
             searchTerms = [...category.terms];
+            activePreset = categoryKey;
             renderFilterTags();
+            renderArtWheel();
             applyFilters();
+        }
+
+        // Render the Art Wheel with active state
+        function renderArtWheel() {
+            const container = document.getElementById('artWheelContainer');
+            const indicator = document.getElementById('activePresetIndicator');
+            if (!container) return;
+
+            const presetButtons = [
+                { key: 'all', name: 'ALL ART', color: '#8338ec', textColor: '#fff' },
+                { key: 'glitch', name: 'Glitch', color: filterCategories.glitch.color, textColor: '#fff' },
+                { key: 'traditional', name: 'Traditional', color: filterCategories.traditional.color, textColor: '#fff' },
+                { key: 'digital', name: 'Digital', color: filterCategories.digital.color, textColor: '#fff' },
+                { key: 'pixel', name: 'Pixel', color: filterCategories.pixel.color, textColor: '#000' },
+                { key: 'animation', name: 'Animation', color: filterCategories.animation.color, textColor: '#fff' },
+                { key: 'threeD', name: '3D/Blender', color: filterCategories.threeD.color, textColor: '#fff' },
+                { key: 'ai', name: 'AI Art', color: filterCategories.ai.color, textColor: '#fff' },
+                { key: 'nft', name: 'NFT', color: filterCategories.nft.color, textColor: '#fff' },
+                { key: 'photography', name: 'Photo', color: filterCategories.photography.color, textColor: '#fff' },
+                { key: 'aesthetic', name: 'Aesthetic', color: filterCategories.aesthetic.color, textColor: '#fff' },
+                { key: 'abstract', name: 'Abstract', color: filterCategories.abstract.color, textColor: '#fff' },
+                { key: 'publicDomain', name: 'Public Domain', color: '#333', textColor: '#fff' }
+            ];
+
+            container.innerHTML = presetButtons.map(btn => {
+                const isActive = activePreset === btn.key;
+                const activeStyle = isActive ? 'box-shadow:0 0 15px ' + btn.color + ',inset 0 0 0 2px #fff;transform:scale(1.05);' : 'opacity:0.8;';
+                const clickHandler = btn.key === 'all' ? 'clearAllFilters()' :
+                                     btn.key === 'publicDomain' ? 'applyPublicDomain()' :
+                                     `applyCategoryPreset('${btn.key}')`;
+                return `<button class="preset-btn" style="background:${btn.color};color:${btn.textColor};${activeStyle}" onclick="${clickHandler}">${btn.name}${isActive ? ' ✓' : ''}</button>`;
+            }).join('');
+
+            // Update indicator
+            if (indicator) {
+                if (activePreset === 'all') {
+                    indicator.textContent = '(Random mode - all art types)';
+                } else {
+                    const cat = filterCategories[activePreset];
+                    indicator.textContent = cat ? `(${cat.name} mode)` : '';
+                }
+            }
         }
 
         // objkt.com artist filter functions
@@ -3071,10 +3179,12 @@
             sourcesEnabled.pexels = true; // Pexels is free to use
             // Clear filters for general content
             searchTerms = [];
+            activePreset = 'publicDomain';
             // Update UI
             renderSourceToggles();
             renderSourceControls();
             renderFilterTags();
+            renderArtWheel();
             applyFilters(); // Preset auto-applies
         }
 
@@ -3926,6 +4036,7 @@
         setupScroll();
         renderSourceToggles();
         renderSourceControls();
+        renderArtWheel(); // Render the Art Wheel presets
         renderFilterTags();
         renderArtistTags();
         renderRedditTags();
