@@ -955,11 +955,16 @@
         }
         .filter-actions {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             align-items: center;
-            margin-top: 15px;
-            padding-top: 15px;
+            padding: 15px;
+            background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.95) 20%, rgba(0,0,0,0.98) 100%);
             border-top: 1px solid #333;
+            position: sticky;
+            bottom: 0;
+            margin: 0 -15px -15px -15px;
+            z-index: 10;
         }
         .custom-filter-input {
             background: #1a1a1a;
@@ -1098,25 +1103,42 @@
             </div>
         </div>
         <div class="filter-section">
-            <h4>STYLE PRESETS</h4>
-            <div class="filter-tags">
-                <button class="preset-btn" style="background:#8338ec;" onclick="clearAllFilters()">ALL ART (Random)</button>
-                <button class="preset-btn" style="background:#ff006e;" onclick="applyPreset('glitch')">Glitch</button>
-                <button class="preset-btn" onclick="applyPreset('pixel')">Pixel Art</button>
-                <button class="preset-btn" onclick="applyPreset('painting')">Painting</button>
-                <button class="preset-btn" onclick="applyPreset('animation')">Animation</button>
-                <button class="preset-btn" onclick="applyPreset('3d')">3D Art</button>
-                <button class="preset-btn" onclick="applyPreset('abstract')">Abstract</button>
-                <button class="preset-btn" onclick="applyPreset('dark')">Dark Art</button>
-                <button class="preset-btn" onclick="applyPreset('vhs')">VHS / Retro</button>
-                <button class="preset-btn" onclick="applyPreset('cyber')">Cyberpunk</button>
-                <button class="preset-btn" onclick="applyPreset('trippy')">Trippy</button>
+            <h4>ART WHEEL - Quick Presets</h4>
+            <div class="filter-tags" style="display:flex;flex-wrap:wrap;gap:8px;">
+                <button class="preset-btn" style="background:#8338ec;" onclick="clearAllFilters()">ALL ART</button>
+                <button class="preset-btn" style="background:#ff006e;" onclick="applyCategoryPreset('glitch')">Glitch</button>
+                <button class="preset-btn" style="background:#8b4513;" onclick="applyCategoryPreset('traditional')">Traditional</button>
+                <button class="preset-btn" style="background:#3a86ff;" onclick="applyCategoryPreset('digital')">Digital</button>
+                <button class="preset-btn" style="background:#00ff88;color:#000;" onclick="applyCategoryPreset('pixel')">Pixel</button>
+                <button class="preset-btn" style="background:#ff8c00;" onclick="applyCategoryPreset('animation')">Animation</button>
+                <button class="preset-btn" style="background:#ff6b6b;" onclick="applyCategoryPreset('threeD')">3D/Blender</button>
+                <button class="preset-btn" style="background:#9b59b6;" onclick="applyCategoryPreset('ai')">AI Art</button>
+                <button class="preset-btn" style="background:#8338ec;" onclick="applyCategoryPreset('nft')">NFT</button>
+                <button class="preset-btn" style="background:#2ecc71;" onclick="applyCategoryPreset('photography')">Photo</button>
+                <button class="preset-btn" style="background:#e91e63;" onclick="applyCategoryPreset('aesthetic')">Aesthetic</button>
+                <button class="preset-btn" style="background:#00bcd4;" onclick="applyCategoryPreset('abstract')">Abstract</button>
                 <button class="preset-btn" style="background:#333;" onclick="applyPublicDomain()">Public Domain</button>
             </div>
         </div>
         <div class="filter-section">
-            <h4>ACTIVE FILTERS - searches ALL sources (click to toggle)</h4>
-            <div class="filter-tags" id="filterTags"></div>
+            <h4>MY SAVED PRESETS
+                <button class="preset-btn" style="margin-left:15px;background:#3a86ff;" onclick="saveCurrentPreset()">+ Save Current</button>
+            </h4>
+            <div class="filter-tags" id="savedPresetsContainer">
+                <span style="color:#666;font-size:0.8rem;">No saved presets yet</span>
+            </div>
+        </div>
+        <div class="filter-section">
+            <h4>ACTIVE FILTERS <span id="activeFilterCount" style="color:#ff006e;font-size:0.8rem;"></span>
+                <button class="preset-btn" style="margin-left:10px;background:#333;font-size:0.7rem;padding:4px 8px;" onclick="searchTerms=[];renderFilterTags();updatePendingChangesIndicator();">Clear All</button>
+            </h4>
+            <div class="filter-tags" id="activeFilters" style="margin-bottom:10px;min-height:30px;">
+                <span style="color:#666;font-size:0.8rem;">No filters - showing all art</span>
+            </div>
+        </div>
+        <div class="filter-section">
+            <h4>FINE-TUNE FILTERS (click to expand categories)</h4>
+            <div id="filterCategories"></div>
         </div>
         <div class="filter-section">
             <h4>ARTISTS (click to search for specific artists)
@@ -1139,9 +1161,10 @@
         <div class="filter-actions">
             <input type="text" class="custom-filter-input" id="customFilter" placeholder="Add custom filter...">
             <button class="preset-btn" onclick="addCustomFilter()">Add</button>
-            <button class="apply-btn" onclick="applyFilters()">Apply Now</button>
-            <span style="color:#666; font-size:0.75rem; margin-left:10px;" id="filterCount"></span>
-            <span style="color:#ff006e; font-size:0.75rem; margin-left:10px; display:none;" id="reloadIndicator">⟳ Auto-reloading...</span>
+            <button class="preset-btn" style="background:#8338ec;" onclick="clearAllFilters()">Random Art</button>
+            <button class="apply-btn" style="background:#ff006e;font-size:1rem;padding:12px 25px;" onclick="applyFilters()">APPLY CHANGES</button>
+            <span style="color:#ff006e; font-size:0.85rem; display:none;" id="pendingChanges">⚠ Changes pending</span>
+            <span style="color:#666; font-size:0.75rem;" id="filterCount"></span>
         </div>
     </div>
 
@@ -1273,6 +1296,24 @@
         const seenUrls = new Set(); // Track URLs to prevent duplicate images
         const artistCountMap = new Map(); // Track how many items per artist
 
+        // Helper to add gif only if URL not seen before
+        function addGifIfUnique(gif) {
+            const url = gif.images?.fixed_height?.url || gif.images?.original?.url;
+            if (!url || seenUrls.has(url)) return false;
+            seenUrls.add(url);
+            // Also add to gifIdSet for dopamine mode dedup
+            const baseId = gif.id?.split('_').slice(0, 2).join('_');
+            if (baseId) gifIdSet.add(baseId);
+            allGifs.push(gif);
+            return true;
+        }
+
+        // Clear all deduplication caches (call when resetting gallery)
+        function clearDedupCaches() {
+            seenUrls.clear();
+            gifIdSet.clear();
+        }
+
         // objkt.com artist handle filter (e.g., "tz1abc..." or artist alias)
         let objktArtistHandle = '';
 
@@ -1305,47 +1346,85 @@
         ];
         let redditSubs = [...allRedditSubs];
 
-        // All available search terms (broad art styles)
-        const allSearchTerms = [
-            // Digital & Modern
-            'digital art', 'pixel art', '3d art', 'animation', 'motion graphics',
-            'generative art', 'ai art', 'nft art', 'concept art', 'fantasy art',
-            // Traditional styles
-            'watercolor', 'oil painting', 'illustration', 'sketch', 'portrait',
-            'landscape', 'abstract art', 'surrealism', 'impressionism', 'pop art',
-            // Aesthetic styles
-            'minimalist', 'aesthetic', 'vintage', 'retro', 'neon',
-            'cyberpunk', 'synthwave', 'vaporwave', 'dark art', 'colorful',
-            // Glitch & experimental
-            'glitch art', 'datamosh', 'vhs aesthetic', 'distortion',
-            // Photography styles
-            'long exposure', 'macro', 'cinematic', 'moody'
-        ];
+        // Organized filter categories
+        const filterCategories = {
+            glitch: {
+                name: 'Glitch & Experimental',
+                color: '#ff006e',
+                terms: ['glitch art', 'datamosh', 'vhs glitch', 'digital glitch', 'pixel glitch', 'video glitch', 'glitch aesthetic', 'corrupted', 'distortion art', 'rgb split', 'scan lines', 'broken tv', 'signal noise', 'pixel sort', 'data corruption', 'static noise', 'analog glitch']
+            },
+            traditional: {
+                name: 'Traditional Art',
+                color: '#8b4513',
+                terms: ['watercolor', 'oil painting', 'acrylic', 'impressionism', 'portrait', 'landscape', 'sketch', 'charcoal', 'pastel', 'sculpture', 'pen and ink', 'gouache', 'tempera', 'fresco', 'still life']
+            },
+            digital: {
+                name: 'Digital Art',
+                color: '#3a86ff',
+                terms: ['digital art', 'digital painting', 'concept art', 'fantasy art', 'character design', 'illustration', 'vector art', 'matte painting', 'fan art', 'comic art', 'manga']
+            },
+            pixel: {
+                name: 'Pixel Art & Retro',
+                color: '#00ff88',
+                terms: ['pixel art', '8bit', '16bit', 'retro gaming', 'sprite art', 'pixel animation', 'chiptune', 'gameboy', 'nes', 'snes', 'retro', 'arcade']
+            },
+            animation: {
+                name: 'Animation & Motion',
+                color: '#ff8c00',
+                terms: ['animation', 'motion graphics', 'loop', 'animated', '2d animation', '3d animation', 'stop motion', 'rotoscope', 'anime', 'cartoon', 'motion design', 'kinetic typography']
+            },
+            threeD: {
+                name: '3D & Blender',
+                color: '#ff6b6b',
+                terms: ['3d art', '3d render', 'cgi', 'blender', 'octane', 'cinema4d', 'maya', 'zbrush', 'sculpting', 'lowpoly', 'isometric', 'voxel', '3d modeling', 'environment design']
+            },
+            ai: {
+                name: 'AI Generated',
+                color: '#9b59b6',
+                terms: ['ai art', 'ai generated', 'midjourney', 'stable diffusion', 'dall-e', 'generative ai', 'neural art', 'machine learning art', 'deepdream', 'gan art']
+            },
+            nft: {
+                name: 'NFT & Crypto Art',
+                color: '#8338ec',
+                terms: ['nft art', 'crypto art', 'generative art', 'pfp', 'collectible', '1/1', 'edition', 'on-chain', 'tezos art', 'ethereum art']
+            },
+            photography: {
+                name: 'Photography',
+                color: '#2ecc71',
+                terms: ['photography', 'long exposure', 'macro', 'cinematic', 'moody', 'portrait photography', 'street photography', 'landscape photography', 'nature photography', 'black and white']
+            },
+            aesthetic: {
+                name: 'Aesthetic Styles',
+                color: '#e91e63',
+                terms: ['vaporwave', 'synthwave', 'cyberpunk', 'neon', 'aesthetic', 'dark art', 'gothic', 'surrealism', 'minimalist', 'maximalist', 'brutalist', 'y2k', 'cottagecore', 'liminal space']
+            },
+            abstract: {
+                name: 'Abstract & Generative',
+                color: '#00bcd4',
+                terms: ['abstract art', 'generative art', 'geometric', 'pattern', 'fractal', 'op art', 'constructivism', 'algorithmic art', 'procedural', 'code art']
+            }
+        };
 
-        // Glitch-specific terms (original default)
-        const glitchTerms = [
-            'glitch art', 'datamosh', 'vhs glitch', 'digital glitch',
-            'pixel glitch', 'video glitch', 'glitch aesthetic', 'corrupted',
-            'distortion art', 'cyberpunk glitch', 'retro glitch', 'static noise',
-            'analog glitch', 'trippy visuals', 'psychedelic loop', 'neon glitch',
-            'rgb split', 'scan lines', 'broken tv', 'signal noise',
-            'synthwave', 'vaporwave', 'holographic', 'lcd glitch',
-            'pixel sort', 'data corruption', 'abstract loop', 'hypnotic animation'
-        ];
+        // Flatten all terms for allSearchTerms
+        const allSearchTerms = Object.values(filterCategories).flatMap(cat => cat.terms);
 
-        // Presets
+        // Glitch-specific terms (for glitch preset)
+        const glitchTerms = filterCategories.glitch.terms;
+
+        // Presets (quick access buttons)
         const presets = {
             glitch: glitchTerms,
-            pixel: ['pixel art', '8bit', '16bit', 'retro gaming', 'sprite art', 'pixel animation'],
-            painting: ['watercolor', 'oil painting', 'acrylic', 'impressionism', 'portrait', 'landscape'],
-            animation: ['animation', 'motion graphics', 'loop', 'animated', '2d animation', '3d animation'],
-            '3d': ['3d art', '3d render', 'cgi', 'blender', 'octane', 'cinema4d'],
-            abstract: ['abstract art', 'generative art', 'geometric', 'minimalist', 'pattern'],
+            pixel: filterCategories.pixel.terms,
+            painting: filterCategories.traditional.terms.slice(0, 6),
+            animation: filterCategories.animation.terms.slice(0, 6),
+            '3d': filterCategories.threeD.terms.slice(0, 6),
+            abstract: filterCategories.abstract.terms.slice(0, 5),
             dark: ['dark art', 'gothic', 'horror art', 'macabre', 'surreal dark'],
             vhs: ['vhs glitch', 'retro glitch', 'analog glitch', 'scan lines', 'broken tv', 'signal noise', 'static noise'],
             cyber: ['cyberpunk', 'neon', 'synthwave', 'vaporwave', 'holographic', 'futuristic'],
             trippy: ['trippy visuals', 'psychedelic', 'hypnotic', 'optical illusion', 'kaleidoscope'],
-            all: [...allSearchTerms]
+            ai: filterCategories.ai.terms,
+            all: allSearchTerms
         };
 
         // Active search terms (start empty for ALL art - uses wildcard search)
@@ -1410,14 +1489,14 @@
                 // Combine search terms with selected artists
                 const effectiveSearchTerms = [...searchTerms, ...selectedArtists];
 
-                updateLoadingStatus('FETCHING GLITCH ART...');
+                updateLoadingStatus('FETCHING ART...');
 
                 // === TENOR ===
                 if (sourcesEnabled.tenor && sourceWeights.tenor > 0) {
                     const limit = Math.round(baseLimit * sourceWeights.tenor);
-                    // Wildcard: broad terms when no filters selected
+                    // Wildcard: ALL ART TYPES when no filters selected
                     let terms = effectiveSearchTerms.length === 0
-                        ? ['trending', 'cool', 'awesome', 'random', 'funny', 'wow', 'satisfying', 'nature', 'space', 'fire', 'water', 'neon', 'colorful']
+                        ? ['art', 'animation', 'illustration', 'aesthetic', 'abstract', 'fantasy', 'digital art', 'painting', 'trippy', 'nature', 'space', 'neon', 'colorful', 'beautiful', 'surreal']
                         : effectiveSearchTerms;
                     const tenorPromises = terms.map(term =>
                         fetch(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(term)}&key=${TENOR_KEY}&limit=${limit}&media_filter=gif`)
@@ -1431,9 +1510,9 @@
                 // === GIPHY ===
                 if (sourcesEnabled.giphy && sourceWeights.giphy > 0) {
                     const limit = Math.round(baseLimit * sourceWeights.giphy);
-                    // Wildcard: broad terms when no filters selected
+                    // Wildcard: ALL ART TYPES when no filters selected
                     let terms = effectiveSearchTerms.length === 0
-                        ? ['trending', 'reaction', 'funny', 'cool', 'amazing', 'beautiful', 'wow', 'nature', 'animals', 'space', 'colorful', 'satisfying']
+                        ? ['art', 'animation', 'illustration', 'aesthetic', 'abstract', 'fantasy', 'pixel art', 'retro', 'trippy', 'nature', 'space', 'neon', 'colorful', 'loop', 'satisfying']
                         : effectiveSearchTerms;
                     const giphyRating = sfwMode ? 'pg-13' : 'r'; // SFW = pg-13, NSFW = r
                     const giphyPromises = terms.map(term =>
@@ -1566,7 +1645,7 @@
                 if (sourcesEnabled.exchange) {
                     const exchangeTags = effectiveSearchTerms.length > 0
                         ? effectiveSearchTerms.slice(0, 8)
-                        : ['glitch', 'abstract', 'generative', 'digital', 'experimental'];
+                        : ['art', 'abstract', 'generative', 'digital', 'photography', 'illustration', 'animation', 'portrait'];
 
                     const exchangePromises = exchangeTags.map(tag =>
                         fetch(`https://api.exchange.art/v2/nfts?q=${encodeURIComponent(tag)}&limit=20&sort=recent`)
@@ -1581,7 +1660,7 @@
                 if (sourcesEnabled.mallow) {
                     const mallowTags = effectiveSearchTerms.length > 0
                         ? effectiveSearchTerms.slice(0, 5)
-                        : ['glitch', 'digital', 'abstract'];
+                        : ['art', 'digital', 'abstract', 'photography', 'illustration'];
 
                     const mallowPromises = mallowTags.map(tag =>
                         fetch(`https://mallow.art/api/artworks?search=${encodeURIComponent(tag)}&limit=30`)
@@ -1596,7 +1675,7 @@
                 if (sourcesEnabled.foster) {
                     const fosterTags = effectiveSearchTerms.length > 0
                         ? effectiveSearchTerms.slice(0, 5)
-                        : ['glitch', 'generative', 'abstract'];
+                        : ['art', 'generative', 'abstract', 'photography', 'digital'];
 
                     const fosterPromises = fosterTags.map(tag =>
                         fetch(`https://api.fostermarketplace.xyz/v1/artworks?q=${encodeURIComponent(tag)}&limit=30`)
@@ -1611,7 +1690,7 @@
                 if (sourcesEnabled.deviantart) {
                     const daTags = effectiveSearchTerms.length > 0
                         ? effectiveSearchTerms.slice(0, 5)
-                        : ['glitch art', 'glitchart', 'databending'];
+                        : ['digital art', 'fantasy art', 'illustration', 'concept art', 'abstract'];
 
                     const daPromises = daTags.map(tag =>
                         fetch(`https://backend.deviantart.com/rss.xml?type=deviation&q=${encodeURIComponent(tag)}`)
@@ -1642,7 +1721,7 @@
                 if (sourcesEnabled.tumblr) {
                     const tumblrTags = effectiveSearchTerms.length > 0
                         ? effectiveSearchTerms.slice(0, 5).map(t => t.replace(/\s+/g, ''))
-                        : ['glitchart', 'glitch', 'datamosh'];
+                        : ['art', 'digitalart', 'illustration', 'aesthetic', 'photography'];
 
                     const tumblrPromises = tumblrTags.map(tag =>
                         fetch(`https://api.tumblr.com/v2/tagged?tag=${encodeURIComponent(tag)}&api_key=fuiKNFp9vQFvjLNvx4sUwti4Yb5yGutBN4Xh10LXZhhRKjWlV4`)
@@ -1657,7 +1736,7 @@
                 if (sourcesEnabled.bluesky) {
                     const bskyTags = effectiveSearchTerms.length > 0
                         ? effectiveSearchTerms.slice(0, 5)
-                        : ['glitch art', 'glitchart', 'digital art'];
+                        : ['art', 'digital art', 'illustration', 'photography', 'creative'];
 
                     const bskyPromises = bskyTags.map(tag =>
                         fetch(`https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(tag)}&limit=30`)
@@ -1672,7 +1751,7 @@
                 if (sourcesEnabled.archive) {
                     const archiveTags = effectiveSearchTerms.length > 0
                         ? effectiveSearchTerms.slice(0, 5)
-                        : ['glitch art', 'video art', 'experimental video'];
+                        : ['art', 'video art', 'animation', 'experimental', 'photography'];
 
                     const archivePromises = archiveTags.map(tag =>
                         fetch(`https://archive.org/advancedsearch.php?q=${encodeURIComponent(tag)}&fl=identifier,title,creator,description&rows=30&output=json&mediatype=movies,image`)
@@ -1687,7 +1766,7 @@
                 if (sourcesEnabled.wikipedia) {
                     const wikiTags = effectiveSearchTerms.length > 0
                         ? effectiveSearchTerms.slice(0, 3)
-                        : ['glitch art', 'digital art'];
+                        : ['art', 'digital art', 'painting'];
 
                     const wikiPromises = wikiTags.map(tag =>
                         fetch(`https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(tag)}&srnamespace=6&srlimit=30&format=json&origin=*`)
@@ -1780,7 +1859,7 @@
                             const animatedUrl = item.media_formats?.gif?.url || item.media_formats?.tinygif?.url;
                             // Tenor: use nanogif (low res) or tinygif as static-ish alternative (first frame approximation)
                             const staticUrl = item.media_formats?.nanogif?.url || item.media_formats?.tinygif?.url || animatedUrl;
-                            allGifs.push({
+                            addGifIfUnique({
                                 id: 'tenor_' + item.id,
                                 title: item.content_description || 'Untitled',
                                 username: item.itemurl ? new URL(item.itemurl).pathname.split('/')[1] : 'Unknown',
@@ -1797,7 +1876,7 @@
 
                     if (result.type === 'giphy' && result.data.data) {
                         result.data.data.forEach(item => {
-                            allGifs.push({
+                            addGifIfUnique({
                                 id: 'giphy_' + item.id,
                                 title: item.title || 'Untitled',
                                 username: item.username || item.user?.username || 'Unknown',
@@ -1825,7 +1904,7 @@
                                 let url = data.url;
                                 if (url.endsWith('.gifv')) url = url.replace('.gifv', '.gif');
 
-                                allGifs.push({
+                                addGifIfUnique({
                                     id: 'reddit_' + data.id,
                                     title: data.title || 'Untitled',
                                     username: data.author || 'Unknown',
@@ -1854,7 +1933,7 @@
                                 let url = data.url;
                                 if (url.endsWith('.gifv')) url = url.replace('.gifv', '.gif');
 
-                                allGifs.push({
+                                addGifIfUnique({
                                     id: 'reddit_' + data.id,
                                     title: data.title || 'Untitled',
                                     username: data.author || 'Unknown',
@@ -1909,7 +1988,7 @@
                                     ? `https://objkt.com/tokens/${token.fa_contract}/${token.token_id}`
                                     : `https://objkt.com/tokens/${token.pk}`;
 
-                                allGifs.push({
+                                addGifIfUnique({
                                     id: 'objkt_' + token.pk,
                                     title: token.name || 'Untitled',
                                     username: artist,
@@ -1939,7 +2018,7 @@
                         result.data.nfts.forEach(nft => {
                             const imageUrl = nft.image || nft.thumbnail || nft.media?.uri;
                             if (imageUrl) {
-                                allGifs.push({
+                                addGifIfUnique({
                                     id: 'exchange_' + nft.mint,
                                     title: nft.name || 'Untitled',
                                     username: nft.artist?.name || nft.creator || 'Unknown',
@@ -1959,7 +2038,7 @@
                         result.data.artworks.forEach(art => {
                             const imageUrl = art.image || art.thumbnail || art.media_url;
                             if (imageUrl) {
-                                allGifs.push({
+                                addGifIfUnique({
                                     id: 'mallow_' + art.id,
                                     title: art.title || art.name || 'Untitled',
                                     username: art.artist?.name || art.creator || 'Unknown',
@@ -1979,7 +2058,7 @@
                         result.data.items.forEach(item => {
                             const imageUrl = item.image || item.thumbnail || item.media;
                             if (imageUrl) {
-                                allGifs.push({
+                                addGifIfUnique({
                                     id: 'foster_' + item.id,
                                     title: item.name || item.title || 'Untitled',
                                     username: item.artist || item.creator || 'Unknown',
@@ -1998,7 +2077,7 @@
                     if (result.type === 'deviantart' && Array.isArray(result.data)) {
                         result.data.forEach((item, i) => {
                             if (item.url) {
-                                allGifs.push({
+                                addGifIfUnique({
                                     id: 'da_' + result.tag + '_' + i,
                                     title: item.title || 'Untitled',
                                     username: item.creator || 'Unknown',
@@ -2021,7 +2100,7 @@
                                 imageUrl = post.photos[0].original_size?.url || post.photos[0].alt_sizes?.[0]?.url;
                             }
                             if (imageUrl) {
-                                allGifs.push({
+                                addGifIfUnique({
                                     id: 'tumblr_' + post.id,
                                     title: post.summary || post.caption?.replace(/<[^>]*>/g, '').slice(0, 50) || 'Untitled',
                                     username: post.blog_name || 'Unknown',
@@ -2045,7 +2124,7 @@
                                 imageUrl = embed.images[0].fullsize || embed.images[0].thumb;
                             }
                             if (imageUrl) {
-                                allGifs.push({
+                                addGifIfUnique({
                                     id: 'bsky_' + post.uri,
                                     title: post.record?.text?.slice(0, 60) || 'Untitled',
                                     username: post.author?.handle || post.author?.displayName || 'Unknown',
@@ -2064,7 +2143,7 @@
                     if (result.type === 'archive' && Array.isArray(result.data)) {
                         result.data.forEach(item => {
                             const imageUrl = `https://archive.org/services/img/${item.identifier}`;
-                            allGifs.push({
+                            addGifIfUnique({
                                 id: 'archive_' + item.identifier,
                                 title: item.title || 'Untitled',
                                 username: item.creator || 'Unknown',
@@ -2083,7 +2162,7 @@
                         result.data.forEach(item => {
                             const fileName = item.title.replace('File:', '');
                             const imageUrl = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}?width=400`;
-                            allGifs.push({
+                            addGifIfUnique({
                                 id: 'wiki_' + item.pageid,
                                 title: fileName.replace(/_/g, ' ').replace(/\.\w+$/, ''),
                                 username: 'Wikimedia Commons',
@@ -2100,7 +2179,7 @@
                     // Process Pexels photo results
                     if (result.type === 'pexels-photo' && Array.isArray(result.data)) {
                         result.data.forEach(photo => {
-                            allGifs.push({
+                            addGifIfUnique({
                                 id: 'pexels_' + photo.id,
                                 title: photo.alt || 'Pexels Photo',
                                 username: photo.photographer || 'Unknown',
@@ -2120,7 +2199,7 @@
                             const videoFile = video.video_files?.find(f => f.quality === 'sd') || video.video_files?.[0];
                             const thumbUrl = video.image || video.video_pictures?.[0]?.picture;
                             if (thumbUrl) {
-                                allGifs.push({
+                                addGifIfUnique({
                                     id: 'pexels_v_' + video.id,
                                     title: 'Pexels Video',
                                     username: video.user?.name || 'Unknown',
@@ -2138,7 +2217,7 @@
                     // Process Pixabay image results (Public Domain)
                     if (result.type === 'pixabay-image' && Array.isArray(result.data)) {
                         result.data.forEach(img => {
-                            allGifs.push({
+                            addGifIfUnique({
                                 id: 'pixabay_' + img.id,
                                 title: img.tags || 'Pixabay Image',
                                 username: img.user || 'Unknown',
@@ -2156,7 +2235,7 @@
                     if (result.type === 'pixabay-video' && Array.isArray(result.data)) {
                         result.data.forEach(vid => {
                             const thumbUrl = `https://i.vimeocdn.com/video/${vid.picture_id}_640x360.jpg`;
-                            allGifs.push({
+                            addGifIfUnique({
                                 id: 'pixabay_v_' + vid.id,
                                 title: vid.tags || 'Pixabay Video',
                                 username: vid.user || 'Unknown',
@@ -2177,7 +2256,7 @@
                             const links = item.links;
                             const thumbUrl = links?.find(l => l.rel === 'preview')?.href;
                             if (thumbUrl && data) {
-                                allGifs.push({
+                                addGifIfUnique({
                                     id: 'nasa_' + data.nasa_id,
                                     title: data.title || 'NASA Image',
                                     username: data.center || 'NASA',
@@ -2831,15 +2910,68 @@
             renderFilterTags();
         }
 
+        // Track which categories are expanded
+        const expandedCategories = new Set();
+
         function renderFilterTags() {
-            const container = document.getElementById('filterTags');
-            container.innerHTML = allSearchTerms.map(term => `
-                <span class="filter-tag ${searchTerms.includes(term) ? 'active' : ''}"
-                      onclick="toggleFilter('${term}')">${term}</span>
-            `).join('');
-            document.getElementById('filterCount').textContent = searchTerms.length === 0
-                ? 'Random art mode'
-                : `${searchTerms.length} filters active`;
+            // Render active filters
+            const activeContainer = document.getElementById('activeFilters');
+            const countSpan = document.getElementById('activeFilterCount');
+
+            if (searchTerms.length === 0) {
+                activeContainer.innerHTML = '<span style="color:#666;font-size:0.8rem;">No filters - showing all art</span>';
+                countSpan.textContent = '';
+            } else {
+                activeContainer.innerHTML = searchTerms.map(term => `
+                    <span class="filter-tag active" onclick="toggleFilter('${term.replace(/'/g, "\\'")}')" style="cursor:pointer;">
+                        ${term} <span style="margin-left:5px;color:#ff6464;">&times;</span>
+                    </span>
+                `).join('');
+                countSpan.textContent = `(${searchTerms.length} active)`;
+            }
+
+            // Render collapsible categories
+            const categoriesContainer = document.getElementById('filterCategories');
+            categoriesContainer.innerHTML = Object.entries(filterCategories).map(([key, category]) => {
+                const isExpanded = expandedCategories.has(key);
+                const activeInCategory = category.terms.filter(t => searchTerms.includes(t)).length;
+                return `
+                    <div class="filter-category" style="margin-bottom:8px;">
+                        <div onclick="toggleCategoryExpand('${key}')" style="cursor:pointer;padding:8px 12px;background:rgba(255,255,255,0.05);border-radius:6px;display:flex;justify-content:space-between;align-items:center;border-left:3px solid ${category.color};">
+                            <span style="font-weight:bold;color:${category.color};">${category.name}</span>
+                            <span style="display:flex;align-items:center;gap:10px;">
+                                ${activeInCategory > 0 ? `<span style="background:${category.color};color:#fff;padding:2px 8px;border-radius:10px;font-size:0.7rem;">${activeInCategory}</span>` : ''}
+                                <span style="color:#888;">${isExpanded ? '▼' : '▶'}</span>
+                            </span>
+                        </div>
+                        ${isExpanded ? `
+                            <div style="padding:10px;background:rgba(0,0,0,0.3);border-radius:0 0 6px 6px;display:flex;flex-wrap:wrap;gap:6px;">
+                                <button class="preset-btn" style="background:${category.color};font-size:0.7rem;padding:4px 8px;" onclick="event.stopPropagation();applyCategoryPreset('${key}')">Select All</button>
+                                ${category.terms.map(term => `
+                                    <span class="filter-tag ${searchTerms.includes(term) ? 'active' : ''}"
+                                          onclick="event.stopPropagation();toggleFilter('${term.replace(/'/g, "\\'")}')"
+                                          style="font-size:0.75rem;padding:4px 8px;">${term}</span>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            // Update filter count (old location for backward compat)
+            const filterCount = document.getElementById('filterCount');
+            if (filterCount) {
+                filterCount.textContent = searchTerms.length === 0 ? 'Random art mode' : `${searchTerms.length} filters`;
+            }
+        }
+
+        function toggleCategoryExpand(categoryKey) {
+            if (expandedCategories.has(categoryKey)) {
+                expandedCategories.delete(categoryKey);
+            } else {
+                expandedCategories.add(categoryKey);
+            }
+            renderFilterTags();
         }
 
         function toggleFilter(term) {
@@ -2849,19 +2981,28 @@
                 searchTerms.push(term);
             }
             renderFilterTags();
-            scheduleReload(800);
+            updatePendingChangesIndicator(); // No auto-reload
         }
 
         function applyPreset(preset) {
             searchTerms = [...presets[preset]];
             renderFilterTags();
-            scheduleReload(500);
+            applyFilters(); // Presets auto-apply
         }
 
         function clearAllFilters() {
             searchTerms = [];
             renderFilterTags();
-            scheduleReload(500);
+            applyFilters(); // Random art auto-applies
+        }
+
+        // Apply a category preset from the Art Wheel
+        function applyCategoryPreset(categoryKey) {
+            const category = filterCategories[categoryKey];
+            if (!category) return;
+            searchTerms = [...category.terms];
+            renderFilterTags();
+            applyFilters();
         }
 
         // objkt.com artist filter functions
@@ -2877,7 +3018,7 @@
                 // Enable objkt source if not already
                 sourcesEnabled.objkt = true;
                 renderSourceToggles();
-                scheduleReload(500);
+                applyFilters(); // Apply immediately for objkt artist search
             } else {
                 status.textContent = 'Enter a wallet address or alias';
                 status.style.color = '#888';
@@ -2891,7 +3032,7 @@
             input.value = '';
             status.textContent = 'Cleared - showing all artists';
             status.style.color = '#8338ec';
-            scheduleReload(500);
+            applyFilters(); // Apply immediately
         }
 
         // GLITCH ONLY preset - turns off non-glitch sources, applies glitch filters
@@ -2916,7 +3057,7 @@
             renderSourceToggles();
             renderSourceControls();
             renderFilterTags();
-            scheduleReload(500);
+            applyFilters(); // Preset auto-applies
         }
 
         // Public Domain preset - NASA, Wikipedia, Archive, Pixabay only
@@ -2934,7 +3075,7 @@
             renderSourceToggles();
             renderSourceControls();
             renderFilterTags();
-            scheduleReload(500);
+            applyFilters(); // Preset auto-applies
         }
 
         const sourceNames = {
@@ -2977,10 +3118,31 @@
         }
 
         function toggleSource(source) {
+            // Check if this would disable ALL sources
+            const wouldBeEnabled = {...sourcesEnabled, [source]: !sourcesEnabled[source]};
+            const anyEnabled = Object.values(wouldBeEnabled).some(v => v);
+
+            if (!anyEnabled) {
+                // Don't allow disabling all sources
+                alert('At least one source must be enabled!');
+                return;
+            }
+
             sourcesEnabled[source] = !sourcesEnabled[source];
             renderSourceToggles();
             renderSourceControls();
-            scheduleReload(500);
+            updatePendingChangesIndicator();
+            // No auto-reload - user must click Apply Changes
+        }
+
+        function updatePendingChangesIndicator() {
+            const indicator = document.getElementById('pendingChanges');
+            if (indicator) indicator.style.display = 'inline';
+        }
+
+        function hidePendingChangesIndicator() {
+            const indicator = document.getElementById('pendingChanges');
+            if (indicator) indicator.style.display = 'none';
         }
 
         function toggleSettings() {
@@ -3013,11 +3175,13 @@
             if (seizureSafeMode) {
                 document.body.classList.add('seizure-safe-mode');
                 btn.classList.add('active');
-                btn.textContent = 'Seizure Safe ON';
+                btn.textContent = 'SEIZURE SAFE: ON';
+                btn.style.background = '#2ecc71';
             } else {
                 document.body.classList.remove('seizure-safe-mode');
                 btn.classList.remove('active');
-                btn.textContent = 'Seizure Safe';
+                btn.textContent = 'SEIZURE SAFE: OFF';
+                btn.style.background = '#333';
             }
         }
 
@@ -3098,13 +3262,15 @@
             if (sfwMode) {
                 btn.classList.add('sfw-active');
                 btn.classList.remove('nsfw-active');
-                btn.textContent = 'SFW';
+                btn.textContent = 'SFW: ON';
                 btn.title = 'Safe For Work mode - click for NSFW (18+)';
+                btn.style.background = '#3a86ff';
             } else {
                 btn.classList.remove('sfw-active');
                 btn.classList.add('nsfw-active');
-                btn.textContent = 'NSFW (18+)';
+                btn.textContent = 'NSFW: ON';
                 btn.title = 'NSFW mode - adult content visible. Click for SFW';
+                btn.style.background = '#ff6464';
             }
         }
 
@@ -3132,13 +3298,17 @@
             // Clear animation cache when toggling mode
             animCachedRows = [];
             animLastRowCount = 0;
+            animCachedTrack = null;
 
             if (dopamineMode) {
                 btn.style.background = '#ff006e';
                 btn.textContent = 'DOPAMINE RUSH (ON)';
 
+                // Check if we have GIF-compatible sources for dopamine refresh
+                const hasGifSources = sourcesEnabled.tenor || sourcesEnabled.giphy;
+
                 // Show loading screen for dopamine mode initial load
-                if (allGifs.length < 100) {
+                if (allGifs.length < 100 && hasGifSources) {
                     resetLoadingProgress();
                     showLoading(true, 'ACTIVATING DOPAMINE RUSH...');
                     updateLoadingProgress(10);
@@ -3147,13 +3317,18 @@
                     await loadMoreForDopamineWithProgress();
 
                     showLoading(false);
+                } else if (allGifs.length < 10) {
+                    // Not enough content and no GIF sources - show message
+                    console.log('Dopamine mode: Using existing content (no GIF sources enabled for refresh)');
                 }
 
-                // Start auto-refresh every 30 seconds to pull new content
-                dopamineRefreshInterval = setInterval(() => {
-                    console.log('Dopamine refresh: loading new content...');
-                    loadMoreForDopamine();
-                }, 30000);
+                // Only start auto-refresh if we have GIF sources
+                if (hasGifSources) {
+                    dopamineRefreshInterval = setInterval(() => {
+                        console.log('Dopamine refresh: loading new content...');
+                        loadMoreForDopamine();
+                    }, 30000);
+                }
             } else {
                 btn.style.background = '#333';
                 btn.textContent = 'DOPAMINE RUSH';
@@ -3483,14 +3658,17 @@
             Object.keys(sourcesEnabled).forEach(s => sourcesEnabled[s] = true);
             renderSourceToggles();
             renderSourceControls();
-            scheduleReload(500);
+            updatePendingChangesIndicator();
         }
 
         function allSourcesOff() {
+            // Keep at least one source enabled
+            const firstSource = Object.keys(sourcesEnabled)[0];
             Object.keys(sourcesEnabled).forEach(s => sourcesEnabled[s] = false);
+            sourcesEnabled[firstSource] = true;
             renderSourceToggles();
             renderSourceControls();
-            // Don't auto-reload - let user select sources first
+            updatePendingChangesIndicator();
         }
 
         function objktOnly() {
@@ -3499,7 +3677,7 @@
             sourcesEnabled.objkt = true;
             renderSourceToggles();
             renderSourceControls();
-            scheduleReload(500);
+            applyFilters(); // Preset auto-applies
         }
 
         function toggleRedditSub(sub) {
@@ -3509,7 +3687,7 @@
                 redditSubs.push(sub);
             }
             renderRedditTags();
-            scheduleReload(800);
+            updatePendingChangesIndicator();
         }
 
         function renderRedditTags() {
@@ -3523,13 +3701,13 @@
         function allSubredditsOn() {
             redditSubs = [...allRedditSubs];
             renderRedditTags();
-            scheduleReload(500);
+            updatePendingChangesIndicator();
         }
 
         function allSubredditsOff() {
             redditSubs = [];
             renderRedditTags();
-            // Don't auto-reload - let user select subreddits first
+            updatePendingChangesIndicator();
         }
 
         function addCustomSubreddit() {
@@ -3541,11 +3719,11 @@
                 allRedditSubs.push(sub);
                 redditSubs.push(sub);
                 renderRedditTags();
-                scheduleReload(500);
+                updatePendingChangesIndicator();
             } else if (sub && !redditSubs.includes(sub)) {
                 redditSubs.push(sub);
                 renderRedditTags();
-                scheduleReload(500);
+                updatePendingChangesIndicator();
             }
             input.value = '';
         }
@@ -3566,19 +3744,19 @@
                 selectedArtists.push(artist);
             }
             renderArtistTags();
-            scheduleReload(800);
+            updatePendingChangesIndicator();
         }
 
         function allArtistsOn() {
             selectedArtists = [...allArtists];
             renderArtistTags();
-            scheduleReload(500);
+            updatePendingChangesIndicator();
         }
 
         function allArtistsOff() {
             selectedArtists = [];
             renderArtistTags();
-            scheduleReload(500);
+            updatePendingChangesIndicator();
         }
 
         function addCustomFilter() {
@@ -3592,14 +3770,153 @@
             }
             input.value = '';
             renderFilterTags();
+            updatePendingChangesIndicator();
+        }
+
+        // === SAVED PRESETS ===
+        function getSavedPresets() {
+            try {
+                return JSON.parse(localStorage.getItem('gg_saved_presets') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveSavedPresets(presetsList) {
+            localStorage.setItem('gg_saved_presets', JSON.stringify(presetsList));
+        }
+
+        function saveCurrentPreset() {
+            const name = prompt('Enter a name for this preset:');
+            if (!name || !name.trim()) return;
+
+            const preset = {
+                name: name.trim(),
+                sources: {...sourcesEnabled},
+                filters: [...searchTerms],
+                artists: [...selectedArtists],
+                subreddits: [...redditSubs],
+                timestamp: Date.now()
+            };
+
+            const savedPresets = getSavedPresets();
+            savedPresets.push(preset);
+            saveSavedPresets(savedPresets);
+            renderSavedPresets();
+        }
+
+        function loadSavedPreset(index) {
+            const savedPresets = getSavedPresets();
+            const preset = savedPresets[index];
+            if (!preset) return;
+
+            // Restore all settings
+            Object.keys(sourcesEnabled).forEach(s => {
+                sourcesEnabled[s] = preset.sources[s] || false;
+            });
+            searchTerms = preset.filters || [];
+            selectedArtists = preset.artists || [];
+            redditSubs = preset.subreddits || [];
+
+            // Update UI
+            renderSourceToggles();
+            renderSourceControls();
+            renderFilterTags();
+            renderArtistTags();
+            renderRedditTags();
+
+            // Apply
+            applyFilters();
+        }
+
+        function deleteSavedPreset(index) {
+            if (!confirm('Delete this preset?')) return;
+
+            const savedPresets = getSavedPresets();
+            savedPresets.splice(index, 1);
+            saveSavedPresets(savedPresets);
+            renderSavedPresets();
+        }
+
+        function renderSavedPresets() {
+            const container = document.getElementById('savedPresetsContainer');
+            if (!container) return;
+
+            const savedPresets = getSavedPresets();
+
+            if (savedPresets.length === 0) {
+                container.innerHTML = '<span style="color:#666;font-size:0.8rem;">No saved presets yet</span>';
+                return;
+            }
+
+            container.innerHTML = savedPresets.map((preset, i) => `
+                <span class="filter-tag" style="display:inline-flex;align-items:center;gap:5px;">
+                    <span onclick="loadSavedPreset(${i})" style="cursor:pointer;">${preset.name}</span>
+                    <span onclick="deleteSavedPreset(${i})" style="cursor:pointer;color:#ff6464;font-weight:bold;" title="Delete">&times;</span>
+                </span>
+            `).join('');
         }
 
         function applyFilters() {
             document.getElementById('filterPanel').classList.remove('active');
+            hidePendingChangesIndicator();
             allGifs = [];
+            clearDedupCaches(); // Clear URL and ID tracking for fresh content
             scrollPos = 0;
-            document.getElementById('scrollTrack').innerHTML = '<div class="loading">Loading glitch art...</div>';
-            loadGifs();
+            // Clear dopamine interval if running to prevent race conditions
+            if (dopamineRefreshInterval) {
+                clearInterval(dopamineRefreshInterval);
+                dopamineRefreshInterval = null;
+            }
+            document.getElementById('scrollTrack').innerHTML = '<div class="loading">Loading art...</div>';
+            loadGifs().then(() => {
+                // Restart dopamine interval if mode is active
+                if (dopamineMode && (sourcesEnabled.tenor || sourcesEnabled.giphy)) {
+                    dopamineRefreshInterval = setInterval(() => {
+                        loadMoreForDopamine();
+                    }, 30000);
+                }
+            });
+        }
+
+        // Welcome popup for first-time visitors
+        function showWelcomePopup() {
+            // Only show once per device
+            if (localStorage.getItem('gg_welcomed') === 'true') return;
+
+            const modal = document.createElement('div');
+            modal.id = 'welcomeModal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:6000;display:flex;justify-content:center;align-items:center;padding:20px;';
+            modal.innerHTML = `
+                <div style="background:linear-gradient(135deg, #1a1a2e 0%, #0a0a0a 100%);border:2px solid #8338ec;border-radius:16px;padding:30px;max-width:500px;text-align:center;box-shadow:0 0 50px rgba(131,56,236,0.3);">
+                    <h2 style="color:#8338ec;margin-bottom:20px;font-size:1.8rem;">Welcome to GlitchGallery</h2>
+                    <p style="color:#ccc;margin-bottom:20px;line-height:1.7;font-size:0.95rem;">
+                        This gallery shows art from multiple sources including GIFs, animations, and NFTs.
+                        Some content may contain <strong style="color:#fff;">flashing images or rapid movement</strong>.
+                    </p>
+                    <div style="background:rgba(46,204,113,0.15);border:1px solid #2ecc71;border-radius:10px;padding:15px;margin-bottom:20px;">
+                        <p style="color:#2ecc71;margin:0;font-size:0.9rem;">
+                            <strong>Seizure Safe Mode</strong> is available in the top navigation bar.
+                            It reduces flashing, shows static images, and filters strobe content.
+                        </p>
+                    </div>
+                    <div style="background:rgba(58,134,255,0.15);border:1px solid #3a86ff;border-radius:10px;padding:15px;margin-bottom:25px;">
+                        <p style="color:#3a86ff;margin:0;font-size:0.9rem;">
+                            <strong>Safe For Work</strong> mode is on by default. NSFW content requires confirmation.
+                        </p>
+                    </div>
+                    <button onclick="closeWelcomePopup()" style="background:#8338ec;color:#fff;border:none;padding:15px 40px;border-radius:10px;cursor:pointer;font-size:1.1rem;font-weight:bold;transition:all 0.2s;">
+                        Got it, let's explore!
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function closeWelcomePopup() {
+            localStorage.setItem('gg_welcomed', 'true');
+            const modal = document.getElementById('welcomeModal');
+            if (modal) modal.remove();
         }
 
         // Init
@@ -3612,6 +3929,8 @@
         renderFilterTags();
         renderArtistTags();
         renderRedditTags();
+        renderSavedPresets(); // Load saved presets
+        showWelcomePopup(); // Show welcome for first-time visitors
         loadGifs();
     </script>
 </body>
