@@ -329,6 +329,98 @@
             0%, 100% { box-shadow: 0 0 15px rgba(58,134,255,0.3); }
             50% { box-shadow: 0 0 25px rgba(131,56,236,0.5), 0 0 35px rgba(58,134,255,0.3); }
         }
+
+        /* Quick Search Bar */
+        .quick-search {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 25px;
+            padding: 0 5px;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+        .quick-search:focus-within {
+            border-color: rgba(131,56,236,0.6);
+            box-shadow: 0 0 20px rgba(131,56,236,0.3);
+            background: rgba(255,255,255,0.08);
+        }
+        .quick-search-input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            padding: 10px 15px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            width: 180px;
+            outline: none;
+        }
+        .quick-search-input::placeholder {
+            color: rgba(255,255,255,0.4);
+        }
+        .quick-search-btn {
+            background: linear-gradient(135deg, rgba(131,56,236,0.4), rgba(255,0,110,0.4));
+            border: none;
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+        .quick-search-btn:hover {
+            background: linear-gradient(135deg, rgba(131,56,236,0.7), rgba(255,0,110,0.7));
+            transform: scale(1.05);
+        }
+        .quick-search-clear {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.4);
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+        .quick-search-clear:hover {
+            color: #ff006e;
+        }
+        .search-hint {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(20,20,30,0.95);
+            border: 1px solid rgba(131,56,236,0.3);
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 5px;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.7);
+            display: none;
+            z-index: 1000;
+        }
+        .quick-search:focus-within .search-hint {
+            display: block;
+        }
+        .search-hint-sources {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        .search-hint-source {
+            background: rgba(255,255,255,0.1);
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+        }
+        .search-hint-source.active {
+            background: rgba(131,56,236,0.4);
+            color: #fff;
+        }
+
         .saved-count {
             background: linear-gradient(135deg, #ff006e, #8338ec);
             padding: 3px 10px;
@@ -1311,6 +1403,15 @@
 
     <header>
         <h1 class="logo">GG <span class="logo-text">GLITCH GALLERY</span></h1>
+        <div class="quick-search" style="position:relative;">
+            <input type="text" class="quick-search-input" id="quickSearchInput" placeholder="Search art, artists, tags..." onkeydown="if(event.key==='Enter')quickSearch()">
+            <button class="quick-search-clear" id="quickSearchClear" onclick="clearQuickSearch()" style="display:none;" title="Clear">&times;</button>
+            <button class="quick-search-btn" onclick="quickSearch()">Search</button>
+            <div class="search-hint">
+                <div>Searches: <strong>objkt</strong> (name, tags, creator), <strong>Tenor</strong>, <strong>Giphy</strong>, <strong>Reddit</strong></div>
+                <div class="search-hint-sources" id="searchHintSources"></div>
+            </div>
+        </div>
         <div class="nav-btns">
             <button class="nav-btn active" onclick="showGallery()">Gallery</button>
             <button class="nav-btn" onclick="showSaved()">Saved <span class="saved-count" id="savedCount">0</span></button>
@@ -1395,12 +1496,12 @@
             </h4>
             <div class="filter-tags" id="redditTags"></div>
             <div style="margin-top:10px;display:flex;gap:10px;align-items:center;">
-                <input type="text" class="custom-filter-input" id="customSubreddit" placeholder="Add subreddit (e.g. glitchart)" style="width:200px;">
+                <input type="text" class="custom-filter-input" id="customSubreddit" placeholder="Add subreddit (e.g. glitchart)" style="width:200px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomSubreddit();}">
                 <button class="preset-btn" onclick="addCustomSubreddit()">Add Subreddit</button>
             </div>
         </div>
         <div class="filter-actions">
-            <input type="text" class="custom-filter-input" id="customFilter" placeholder="Add custom filter...">
+            <input type="text" class="custom-filter-input" id="customFilter" placeholder="Add custom filter... (Enter to add)" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomFilter();}">
             <button class="preset-btn" onclick="addCustomFilter()">Add</button>
             <button class="preset-btn" style="background:#8338ec;" onclick="clearAllFilters()">Random Art</button>
             <button class="apply-btn" style="background:#ff006e;font-size:1rem;padding:12px 25px;" onclick="applyFilters()">APPLY CHANGES</button>
@@ -1983,67 +2084,95 @@
                             }
                         `;
                     } else if (effectiveSearchTerms.length > 0) {
-                        // Query multiple search terms for variety
+                        // Enhanced objkt search: searches NAME, TAGS, and CREATOR
                         const searchTerms = effectiveSearchTerms
                             .slice(0, 3)  // Use up to 3 terms
                             .map(t => t.split(' ')[0].replace(/[^a-zA-Z0-9]/g, ''))
                             .filter(t => t.length > 2);  // Only terms with 3+ chars
 
-                        // Create multiple queries for variety
-                        const objktPromises = searchTerms.map(searchTerm => {
-                            const randomOffset = Math.floor(Math.random() * 2000);  // Large offset for variety
-                            const termQuery = `
-                                query GetFilteredArt {
-                                    token(
-                                        where: {
-                                            name: {_ilike: "%${searchTerm}%"},
-                                            artifact_uri: {_is_null: false},
-                                            display_uri: {_is_null: false}
-                                        },
-                                        limit: ${Math.ceil(limit / searchTerms.length)},
-                                        offset: ${randomOffset},
-                                        order_by: {timestamp: desc}
-                                    ) {
-                                        pk
-                                        name
-                                        mime
-                                        artifact_uri
-                                        display_uri
-                                        thumbnail_uri
-                                        supply
-                                        token_id
-                                        fa_contract
-                                        creators {
-                                            holder {
-                                                address
-                                                alias
-                                            }
-                                        }
-                                        listings_active(limit: 1, order_by: {price: asc}) {
-                                            price
-                                            currency {
-                                                symbol
-                                                decimals
-                                            }
-                                        }
-                                    }
-                                }
-                            `;
-                            console.log('objkt: searching for term:', searchTerm, 'offset:', randomOffset);
-                            return fetch('https://data.objkt.com/v3/graphql', {
+                        // Create comprehensive search queries for each term
+                        const objktPromises = searchTerms.flatMap(searchTerm => {
+                            const perTermLimit = Math.ceil(limit / searchTerms.length / 3); // Split across 3 query types
+                            const randomOffset = Math.floor(Math.random() * 1000);
+
+                            // Query 1: Search by token NAME
+                            const nameQuery = fetch('https://data.objkt.com/v3/graphql', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ query: termQuery })
-                            })
-                                .then(r => r.json())
-                                .then(data => ({ type: 'objkt', data }))
-                                .catch(err => {
-                                    console.error('objkt fetch failed:', err);
-                                    return { type: 'objkt', data: { data: { token: [] } } };
-                                });
+                                body: JSON.stringify({ query: `
+                                    query SearchByName {
+                                        token(
+                                            where: {
+                                                name: {_ilike: "%${searchTerm}%"},
+                                                artifact_uri: {_is_null: false},
+                                                display_uri: {_is_null: false}
+                                            },
+                                            limit: ${perTermLimit},
+                                            offset: ${randomOffset},
+                                            order_by: {timestamp: desc}
+                                        ) {
+                                            pk name mime artifact_uri display_uri thumbnail_uri supply token_id fa_contract
+                                            creators { holder { address alias } }
+                                            listings_active(limit: 1, order_by: {price: asc}) { price currency { symbol decimals } }
+                                        }
+                                    }
+                                `})
+                            }).then(r => r.json()).then(data => ({ type: 'objkt', data })).catch(() => ({ type: 'objkt', data: { data: { token: [] } } }));
+
+                            // Query 2: Search by TAG
+                            const tagQuery = fetch('https://data.objkt.com/v3/graphql', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ query: `
+                                    query SearchByTag {
+                                        token(
+                                            where: {
+                                                tags: { tag: { name: {_ilike: "%${searchTerm}%"} } },
+                                                artifact_uri: {_is_null: false},
+                                                display_uri: {_is_null: false}
+                                            },
+                                            limit: ${perTermLimit},
+                                            offset: ${randomOffset},
+                                            order_by: {timestamp: desc}
+                                        ) {
+                                            pk name mime artifact_uri display_uri thumbnail_uri supply token_id fa_contract
+                                            creators { holder { address alias } }
+                                            listings_active(limit: 1, order_by: {price: asc}) { price currency { symbol decimals } }
+                                        }
+                                    }
+                                `})
+                            }).then(r => r.json()).then(data => ({ type: 'objkt', data })).catch(() => ({ type: 'objkt', data: { data: { token: [] } } }));
+
+                            // Query 3: Search by CREATOR alias
+                            const creatorQuery = fetch('https://data.objkt.com/v3/graphql', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ query: `
+                                    query SearchByCreator {
+                                        token(
+                                            where: {
+                                                creators: { holder: { alias: {_ilike: "%${searchTerm}%"} } },
+                                                artifact_uri: {_is_null: false},
+                                                display_uri: {_is_null: false}
+                                            },
+                                            limit: ${perTermLimit},
+                                            offset: ${randomOffset},
+                                            order_by: {timestamp: desc}
+                                        ) {
+                                            pk name mime artifact_uri display_uri thumbnail_uri supply token_id fa_contract
+                                            creators { holder { address alias } }
+                                            listings_active(limit: 1, order_by: {price: asc}) { price currency { symbol decimals } }
+                                        }
+                                    }
+                                `})
+                            }).then(r => r.json()).then(data => ({ type: 'objkt', data })).catch(() => ({ type: 'objkt', data: { data: { token: [] } } }));
+
+                            console.log(`objkt: searching "${searchTerm}" by name, tags, and creator`);
+                            return [nameQuery, tagQuery, creatorQuery];
                         });
+
                         allPromises.push(...objktPromises);
-                        console.log('objkt: created', objktPromises.length, 'search queries');
+                        console.log('objkt: created', objktPromises.length, 'comprehensive search queries');
                         // Skip the single query code below
                         objktQuery = null;
                     } else {
@@ -3838,6 +3967,7 @@
             renderSourceToggles();
             renderSourceControls();
             updatePendingChangesIndicator();
+            updateSearchHint(); // Update which sources will be searched
             // No auto-reload - user must click Apply Changes
         }
 
@@ -4645,6 +4775,66 @@
             input.value = '';
         }
 
+        // === QUICK SEARCH ===
+        let recentSearches = JSON.parse(localStorage.getItem('gg_recent_searches') || '[]');
+
+        function quickSearch() {
+            const input = document.getElementById('quickSearchInput');
+            const term = input.value.trim();
+            if (!term) return;
+
+            // Add to recent searches
+            recentSearches = recentSearches.filter(s => s !== term);
+            recentSearches.unshift(term);
+            recentSearches = recentSearches.slice(0, 10); // Keep last 10
+            localStorage.setItem('gg_recent_searches', JSON.stringify(recentSearches));
+
+            // Set as the only active filter
+            searchTerms = [term];
+
+            // Show clear button
+            document.getElementById('quickSearchClear').style.display = 'block';
+
+            // Apply immediately (no need to click Apply Changes)
+            console.log(`Quick search: "${term}"`);
+            allGifs = [];
+            clearDedupCaches();
+            scrollPos = 0;
+            document.getElementById('scrollTrack').innerHTML = '<div class="loading">Searching...</div>';
+            loadGifs().then(() => {
+                renderFilterTags(); // Update filter panel to show active search
+            });
+        }
+
+        function clearQuickSearch() {
+            const input = document.getElementById('quickSearchInput');
+            input.value = '';
+            document.getElementById('quickSearchClear').style.display = 'none';
+            searchTerms = [];
+            renderFilterTags();
+            // Reload with default content
+            allGifs = [];
+            clearDedupCaches();
+            loadGifs();
+        }
+
+        // Update search hint with active sources
+        function updateSearchHint() {
+            const container = document.getElementById('searchHintSources');
+            if (!container) return;
+
+            const searchableSources = [
+                { key: 'objkt', name: 'objkt (NFTs)' },
+                { key: 'tenor', name: 'Tenor' },
+                { key: 'giphy', name: 'Giphy' },
+                { key: 'reddit', name: 'Reddit' }
+            ];
+
+            container.innerHTML = searchableSources.map(s =>
+                `<span class="search-hint-source ${sourcesEnabled[s.key] ? 'active' : ''}">${s.name}</span>`
+            ).join('');
+        }
+
         function renderArtistTags() {
             const container = document.getElementById('artistTags');
             if (!container) return;
@@ -4969,6 +5159,9 @@
         // Initialize auto-shuffle
         updateAutoShuffleDisplay();
         startAutoShuffle();
+
+        // Initialize quick search hint
+        updateSearchHint();
     </script>
 </body>
 </html>
